@@ -1,0 +1,49 @@
+import { create } from "zustand";
+import { Asset, Metadata, Job, Preset } from "./types";
+
+interface AppState {
+  currentAsset: Asset | null;
+  metadata: Metadata | null;
+  jobs: Job[];
+  selectedPreset: Preset | null;
+  customPresets: Preset[];
+  isPresetEditorOpen: boolean;
+  comparisonJobIds: string[];
+  
+  setCurrentAsset: (asset: Asset | null) => void;
+  setMetadata: (metadata: Metadata | null) => void;
+  addJob: (job: Job) => void;
+  updateJob: (jobId: string, updates: Partial<Job>) => void;
+  setSelectedPreset: (preset: Preset | null) => void;
+  addCustomPreset: (preset: Preset) => void;
+  setIsPresetEditorOpen: (isOpen: boolean) => void;
+  toggleComparisonJob: (jobId: string) => void;
+  clearComparison: () => void;
+}
+
+export const useStore = create<AppState>((set) => ({
+  currentAsset: null,
+  metadata: null,
+  jobs: [],
+  selectedPreset: null,
+  customPresets: [],
+  isPresetEditorOpen: false,
+  comparisonJobIds: [],
+
+  setCurrentAsset: (asset) => set({ currentAsset: asset, metadata: null }),
+  setMetadata: (metadata) => set({ metadata }),
+  addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs] })),
+  updateJob: (jobId, updates) =>
+    set((state) => ({
+      jobs: state.jobs.map((j) => (j.id === jobId ? { ...j, ...updates } : j)),
+    })),
+  setSelectedPreset: (preset) => set({ selectedPreset: preset }),
+  addCustomPreset: (preset) => set((state) => ({ customPresets: [...state.customPresets, preset] })),
+  setIsPresetEditorOpen: (isOpen) => set({ isPresetEditorOpen: isOpen }),
+  toggleComparisonJob: (jobId) => set((state) => ({
+    comparisonJobIds: state.comparisonJobIds.includes(jobId)
+      ? state.comparisonJobIds.filter(id => id !== jobId)
+      : [...state.comparisonJobIds, jobId]
+  })),
+  clearComparison: () => set({ comparisonJobIds: [] }),
+}));
