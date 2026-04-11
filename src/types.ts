@@ -102,9 +102,11 @@ export interface Job {
   id: string;
   status: "queued" | "processing" | "completed" | "failed";
   progress: number;
+  priority: "low" | "standard" | "high";
   preset: Preset;
   outputFilename: string;
   thumbnailUrl?: string;
+  thumbnailStrip?: string[];
   createdAt: string;
   completedAt?: string;
   error?: string;

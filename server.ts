@@ -5,15 +5,16 @@ import fs from "fs";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import ffmpeg from "fluent-ffmpeg";
+import axios from "axios";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure directories exist
-const UPLOADS_DIR = path.join(__dirname, "uploads");
-const OUTPUTS_DIR = path.join(__dirname, "outputs");
-const THUMBS_DIR = path.join(__dirname, "thumbnails");
+const UPLOADS_DIR = path.resolve(__dirname, "uploads");
+const OUTPUTS_DIR = path.resolve(__dirname, "outputs");
+const THUMBS_DIR = path.resolve(__dirname, "thumbnails");
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
 if (!fs.existsSync(OUTPUTS_DIR)) fs.mkdirSync(OUTPUTS_DIR);
@@ -33,9 +34,177 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const jobs = new Map<string, any>();
+const webhooks = new Set<string>();
+const CONCURRENT_JOBS_LIMIT = 2;
+let activeJobsCount = 0;
+
+const processQueue = async () => {
+  if (activeJobsCount >= CONCURRENT_JOBS_LIMIT) return;
+
+  const queuedJobs = Array.from(jobs.values())
+    .filter((j) => j.status === "queued")
+    .sort((a, b) => {
+      const priorityMap = { high: 3, standard: 2, low: 1 };
+      const pA = priorityMap[a.priority as keyof typeof priorityMap] || 2;
+      const pB = priorityMap[b.priority as keyof typeof priorityMap] || 2;
+      if (pA !== pB) return pB - pA;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+
+  if (queuedJobs.length === 0) return;
+
+  const jobToProcess = queuedJobs[0];
+  startJob(jobToProcess.id);
+};
+
+const startJob = (jobId: string) => {
+  const job = jobs.get(jobId);
+  if (!job) return;
+
+  activeJobsCount++;
+  job.status = "processing";
+  jobs.set(jobId, { ...job });
+
+  const inputPath = path.join(UPLOADS_DIR, job.inputFilename);
+  const outputPath = path.join(OUTPUTS_DIR, job.outputFilename);
+  const preset = job.preset;
+
+  const command = ffmpeg(inputPath);
+
+  if (preset.video) {
+    if (preset.video.codec) command.videoCodec(preset.video.codec);
+    if (preset.video.bitrate) command.videoBitrate(preset.video.bitrate);
+    if (preset.video.fps) command.fps(preset.video.fps);
+    if (preset.video.width && preset.video.height) {
+      command.size(`${preset.video.width}x${preset.video.height}`);
+    }
+  }
+
+  if (preset.audio) {
+    if (preset.audio.codec) command.audioCodec(preset.audio.codec);
+    if (preset.audio.bitrate) command.audioBitrate(preset.audio.bitrate);
+    if (preset.audio.channels) command.audioChannels(preset.audio.channels);
+  }
+
+  if (preset.outputContainer) {
+    command.format(preset.outputContainer);
+  }
+
+  command
+    .on("start", () => {
+      console.log(`Started job ${jobId}`);
+    })
+    .on("progress", (progress) => {
+      jobs.set(jobId, { ...jobs.get(jobId)!, progress: Math.round(progress.percent || 0) });
+    })
+    .on("end", async () => {
+      const thumbnailFilename = `thumb-${jobId}.jpg`;
+      let thumbUrl = null;
+      let strip = [];
+
+      try {
+        // Try to generate main thumbnail
+        await generateThumbnail(outputPath, THUMBS_DIR, thumbnailFilename, "00:00:01");
+        thumbUrl = `/thumbnails/${thumbnailFilename}`;
+      } catch (err) {
+        console.error(`Main thumbnail generation failed for job ${jobId}:`, err);
+      }
+
+      try {
+        // Try to generate thumbnail strip
+        strip = await generateThumbnailStrip(outputPath, THUMBS_DIR, jobId);
+      } catch (err) {
+        console.error(`Thumbnail strip generation failed for job ${jobId}:`, err);
+      }
+      
+      const updatedJob = {
+        ...jobs.get(jobId)!,
+        status: "completed",
+        progress: 100,
+        thumbnailUrl: thumbUrl,
+        thumbnailStrip: strip,
+        completedAt: new Date().toISOString(),
+      };
+      
+      jobs.set(jobId, updatedJob);
+      triggerWebhooks("job.completed", updatedJob);
+      activeJobsCount--;
+      processQueue();
+    })
+    .on("error", (err) => {
+      console.error(`Job ${jobId} failed:`, err.message);
+      const updatedJob = { ...jobs.get(jobId)!, status: "failed", error: err.message };
+      jobs.set(jobId, updatedJob);
+      triggerWebhooks("job.failed", updatedJob);
+      activeJobsCount--;
+      processQueue();
+    })
+    .save(outputPath);
+};
+
+// Helper to trigger webhooks
+const triggerWebhooks = async (event: string, data: any) => {
+  const payload = {
+    event,
+    timestamp: new Date().toISOString(),
+    data,
+  };
+
+  const promises = Array.from(webhooks).map(async (url) => {
+    try {
+      await axios.post(url, payload, { timeout: 5000 });
+      console.log(`Webhook triggered successfully: ${url}`);
+    } catch (err) {
+      console.error(`Webhook failed: ${url}`, err instanceof Error ? err.message : String(err));
+    }
+  });
+
+  await Promise.allSettled(promises);
+};
+
+// Helper to generate a thumbnail strip
+const generateThumbnailStrip = async (inputPath: string, outputDir: string, jobId: string, count: number = 5) => {
+  return new Promise<string[]>((resolve, reject) => {
+    ffmpeg.ffprobe(inputPath, (err, metadata) => {
+      if (err) return reject(err);
+      const duration = metadata.format.duration || 0;
+      if (duration === 0) return resolve([]);
+
+      const timestamps: string[] = [];
+      for (let i = 1; i <= count; i++) {
+        const time = (parseFloat(String(duration)) * (i / (count + 1))).toFixed(2);
+        timestamps.push(time);
+      }
+
+      const filenames: string[] = [];
+      let completed = 0;
+
+      timestamps.forEach((ts, idx) => {
+        const filename = `strip-${jobId}-${idx}.jpg`;
+        ffmpeg(inputPath)
+          .screenshots({
+            timestamps: [ts],
+            filename,
+            folder: outputDir,
+            size: "320x180",
+          })
+          .on("end", () => {
+            filenames.push(`/thumbnails/${filename}`);
+            completed++;
+            if (completed === timestamps.length) resolve(filenames);
+          })
+          .on("error", (err) => {
+            console.error(`Strip thumbnail ${idx} failed:`, err.message);
+            completed++;
+            if (completed === timestamps.length) resolve(filenames);
+          });
+      });
+    });
+  });
+};
 
 // Helper to generate thumbnail
-async function generateThumbnail(inputPath: string, outputDir: string, filename: string, time = "50%") {
+async function generateThumbnail(inputPath: string, outputDir: string, filename: string, time = "00:00:01") {
   return new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error("Thumbnail generation timed out"));
@@ -242,85 +411,24 @@ async function startServer() {
   });
 
   app.post("/api/jobs", (req, res) => {
-    const { assetId, filename, preset } = req.body;
+    const { assetId, filename, preset, priority = "standard" } = req.body;
     const jobId = uuidv4();
-    const inputPath = path.join(UPLOADS_DIR, filename);
     const outputFilename = `${jobId}_${preset.name.replace(/\s+/g, "_")}.${preset.outputContainer || "mp4"}`;
-    const outputPath = path.join(OUTPUTS_DIR, outputFilename);
-    const thumbFilename = `thumb_${jobId}.jpg`;
 
-    const job: {
-      id: string;
-      status: string;
-      progress: number;
-      preset: any;
-      outputFilename: string;
-      thumbnailUrl?: string;
-      createdAt: string;
-      error?: string;
-      completedAt?: string;
-    } = {
+    const job = {
       id: jobId,
       status: "queued",
       progress: 0,
+      priority,
       preset,
+      inputFilename: filename,
       outputFilename,
       createdAt: new Date().toISOString(),
     };
 
     jobs.set(jobId, job);
-
-    // Start processing asynchronously
-    const command = ffmpeg(inputPath);
-
-    // Apply preset settings
-    if (preset.video) {
-      if (preset.video.codec) command.videoCodec(preset.video.codec);
-      if (preset.video.bitrate) command.videoBitrate(preset.video.bitrate);
-      if (preset.video.fps) command.fps(preset.video.fps);
-      if (preset.video.width && preset.video.height) {
-        command.size(`${preset.video.width}x${preset.video.height}`);
-      }
-    }
-
-    if (preset.audio) {
-      if (preset.audio.codec) command.audioCodec(preset.audio.codec);
-      if (preset.audio.bitrate) command.audioBitrate(preset.audio.bitrate);
-      if (preset.audio.channels) command.audioChannels(preset.audio.channels);
-    }
-
-    if (preset.outputContainer) {
-      command.format(preset.outputContainer);
-    }
-
-    command
-      .on("start", () => {
-        job.status = "processing";
-      })
-      .on("progress", (progress) => {
-        job.progress = Math.round(progress.percent || 0);
-      })
-      .on("error", (err) => {
-        console.error(`Job ${jobId} failed:`, err.message);
-        job.status = "failed";
-        job.error = err.message;
-      })
-      .on("end", async () => {
-        job.status = "completed";
-        job.progress = 100;
-        job.completedAt = new Date().toISOString();
-        
-        // Generate thumbnail for output
-        try {
-          await generateThumbnail(outputPath, THUMBS_DIR, thumbFilename);
-          job.thumbnailUrl = `/thumbnails/${thumbFilename}`;
-        } catch (err) {
-          console.error(`Failed to generate thumbnail for job ${jobId}:`, err);
-        }
-      })
-      .save(outputPath);
-
-    res.json({ jobId });
+    processQueue();
+    res.json(job);
   });
 
   app.get("/api/jobs/:jobId", (req, res) => {
@@ -353,9 +461,27 @@ async function startServer() {
     });
   }
 
+  // Webhook Management
+  app.get("/api/webhooks", (req, res) => {
+    res.json(Array.from(webhooks));
+  });
+
+  app.post("/api/webhooks", (req, res) => {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: "URL is required" });
+    webhooks.add(url);
+    res.json({ message: "Webhook registered", webhooks: Array.from(webhooks) });
+  });
+
+  app.delete("/api/webhooks", (req, res) => {
+    const { url } = req.body;
+    webhooks.delete(url);
+    res.json({ message: "Webhook removed", webhooks: Array.from(webhooks) });
+  });
+
   // Bulk Job Creation
   app.post("/api/bulk-jobs", (req, res) => {
-    const { filenames, preset } = req.body;
+    const { filenames, preset, priority = "standard" } = req.body;
 
     if (!filenames || !Array.isArray(filenames) || !preset) {
       return res.status(400).json({ error: "Missing filenames array or preset" });
@@ -367,7 +493,6 @@ async function startServer() {
       const jobId = uuidv4();
       const inputPath = path.join(UPLOADS_DIR, filename);
       const outputFilename = `transcoded-${jobId}-${filename.split(".")[0]}.${preset.outputContainer}`;
-      const outputPath = path.join(OUTPUTS_DIR, outputFilename);
 
       if (!fs.existsSync(inputPath)) return;
 
@@ -375,61 +500,59 @@ async function startServer() {
         id: jobId,
         status: "queued",
         progress: 0,
+        priority,
         preset,
+        inputFilename: filename,
         outputFilename,
         createdAt: new Date().toISOString(),
       };
 
       jobs.set(jobId, job);
       jobIds.push(jobId);
-
-      // Start processing
-      const command = ffmpeg(inputPath);
-
-      // Apply preset settings
-      if (preset.video.codec) command.videoCodec(preset.video.codec);
-      if (preset.video.bitrate) command.videoBitrate(preset.video.bitrate);
-      if (preset.video.fps) command.fps(preset.video.fps);
-      if (preset.video.width && preset.video.height) {
-        command.size(`${preset.video.width}x${preset.video.height}`);
-      }
-
-      if (preset.audio) {
-        if (preset.audio.codec) command.audioCodec(preset.audio.codec);
-        if (preset.audio.bitrate) command.audioBitrate(preset.audio.bitrate);
-        if (preset.audio.channels) command.audioChannels(preset.audio.channels);
-      }
-
-      command
-        .on("start", () => {
-          jobs.set(jobId, { ...jobs.get(jobId)!, status: "processing" });
-        })
-        .on("progress", (progress) => {
-          jobs.set(jobId, { ...jobs.get(jobId)!, progress: Math.round(progress.percent || 0) });
-        })
-        .on("end", async () => {
-          const thumbnailFilename = `thumb-${jobId}.jpg`;
-          
-          try {
-            await generateThumbnail(outputPath, THUMBS_DIR, thumbnailFilename);
-            jobs.set(jobId, {
-              ...jobs.get(jobId)!,
-              status: "completed",
-              progress: 100,
-              thumbnailUrl: `/thumbnails/${thumbnailFilename}`,
-            });
-          } catch (err) {
-            jobs.set(jobId, { ...jobs.get(jobId)!, status: "completed", progress: 100 });
-          }
-        })
-        .on("error", (err) => {
-          console.error(`Job ${jobId} failed:`, err.message);
-          jobs.set(jobId, { ...jobs.get(jobId)!, status: "failed" });
-        })
-        .save(outputPath);
     });
 
+    processQueue();
     res.json({ jobIds });
+  });
+
+  // API Documentation
+  app.get("/api/docs", (req, res) => {
+    res.json({
+      name: "VideoMeta Pro API",
+      version: "1.0.0",
+      description: "Media compliance and transformation API for digital signage.",
+      endpoints: [
+        {
+          path: "/api/upload",
+          method: "POST",
+          description: "Upload a video file for analysis.",
+          body: "multipart/form-data (file)",
+        },
+        {
+          path: "/api/metadata/:filename",
+          method: "GET",
+          description: "Get technical metadata and compliance analysis for a file.",
+        },
+        {
+          path: "/api/jobs",
+          method: "POST",
+          description: "Start a transcoding job.",
+          body: "{ assetId, filename, preset }",
+        },
+        {
+          path: "/api/bulk-jobs",
+          method: "POST",
+          description: "Start multiple transcoding jobs.",
+          body: "{ filenames: string[], preset }",
+        },
+        {
+          path: "/api/webhooks",
+          method: "POST",
+          description: "Register a webhook URL.",
+          body: "{ url }",
+        },
+      ],
+    });
   });
 
   app.listen(PORT, "0.0.0.0", () => {

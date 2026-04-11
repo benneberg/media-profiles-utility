@@ -20,34 +20,37 @@
 - **Compliance & Validation Engine**:
     - **Auto-Detection**: Flagging non-standard pixel formats, bitrates, and FPS.
     - **Enlightened Recommendations**: Actionable fixes for every violation.
+    - **Rule-Based System**: Unique IDs and severity levels for all checks.
+- **Semantic Layer (Operator-Grade)**:
+    - **Derived Fields**: Orientation (landscape/portrait), HD/4K tags, FPS categories.
+    - **Decision Layer**: "Ready for Signage" summary (Layer 1 UI).
+    - **Signage Compatibility Score**: 0-100% score based on rules.
+- **Advanced Insights**:
+    - **GOP Analysis**: Keyframe interval and seekability metrics.
+    - **Network Suitability**: Estimated bandwidth and caching recommendations.
+    - **Playback Risk Model**: CPU load and startup delay estimates.
+- **Preset Intelligence**:
+    - **Preset Fit Analysis**: Automatically recommend the best preset for a source.
+    - **Delta View**: Show exactly what will change (e.g., "Bitrate: Increase").
 - **Pipeline & Automation API**:
-    - **Bulk Processing**: `/api/bulk-jobs` endpoint for automation.
+    - **Bulk Processing**: `/api/bulk-jobs` and `/api/jobs` with priority support.
+    - **Webhooks**: Real-time notifications for external services.
+    - **API Documentation**: Integrated documentation for system integration.
+- **Visual Intelligence**:
+    - **Thumbnail Strip**: Multi-point visual timeline for spot-checking.
+- **Infrastructure Foundations**:
+    - **Asset Library**: Manage multiple uploaded assets for bulk workflows.
+    - **Cloud Storage Config**: UI for S3/GCS integration.
 - **UI/UX Restoration**:
     - **Fixed Navigation**: Integrated About and Documentation modals.
     - **Pro Branding**: Polished, engineering-focused interface.
 
 ## 🚀 Upcoming / Not Yet Included
 
-### 1. Semantic Layer (Operator-Grade)
-- [ ] **Derived Fields**: Orientation (landscape/portrait), HD/4K tags, FPS categories.
-- [ ] **Decision Layer**: "Ready for Signage" summary (Layer 1 UI).
-- [ ] **Signage Compatibility Score**: 0-100% score based on rules.
+### 1. Visual Intelligence
+- [ ] **Timeline-Based Comparison**: Frame-by-frame visual diffing between source and variant.
+- [ ] **Waveform/Vectorscope**: Basic visual analysis of color and luminance.
 
-### 2. Rule-Based Validation Upgrade
-- [ ] **Rule IDs**: Unique identifiers for every validation rule.
-- [ ] **Detailed Rule Engine**: Move from hardcoded checks to a structured rule set.
-- [ ] **Anomaly Detection**: Flagging suspicious bitrates (e.g., 2kbps audio).
-
-### 3. Preset Intelligence
-- [ ] **Preset Fit Analysis**: Automatically recommend the best preset for a source.
-- [ ] **Delta View**: Show exactly what will change (e.g., "Bitrate: Increase").
-
-### 4. Advanced Insights
-- [ ] **GOP Analysis**: Keyframe interval and seekability metrics.
-- [ ] **Network Suitability**: Estimated bandwidth and caching recommendations.
-- [ ] **Playback Risk Model**: CPU load and startup delay estimates.
-
-### 5. Infrastructure & Scale
-- [ ] **Webhooks**: Notify external services when jobs complete.
-- [ ] **Cloud Storage**: Integration with S3/GCS.
-- [ ] **Visual Comparison**: Timeline-based visual diffing.
+### 2. Infrastructure & Scale
+- [ ] **Distributed Workers**: Architecture for scaling transcoding across multiple nodes.
+- [ ] **User Auth & Teams**: Multi-user support for collaborative media management.

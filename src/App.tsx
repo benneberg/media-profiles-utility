@@ -3,8 +3,10 @@ import Upload from "./components/Upload";
 import MetadataViewer from "./components/MetadataViewer";
 import PresetSelector from "./components/PresetSelector";
 import JobTracker from "./components/JobTracker";
+import AssetLibrary from "./components/AssetLibrary";
 import AboutModal from "./components/AboutModal";
 import DocumentationModal from "./components/DocumentationModal";
+import SettingsModal from "./components/SettingsModal";
 import ComparisonView from "./components/ComparisonView";
 import { useStore } from "./store";
 import { Video, Settings, Layout, Layers, Zap, Info, Github, Monitor, Globe } from "lucide-react";
@@ -15,6 +17,7 @@ export default function App() {
   const { currentAsset, metadata, setIsPresetEditorOpen } = useStore();
   const [isAboutOpen, setIsAboutOpen] = React.useState(false);
   const [isDocOpen, setIsDocOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -39,15 +42,27 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              title="Settings"
+            >
+              <Zap className="w-5 h-5" />
+            </button>
+            <button 
               onClick={() => setIsAboutOpen(true)}
               className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
             >
               <Info className="w-5 h-5" />
             </button>
             <div className="h-8 w-[1px] bg-slate-200" />
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider border border-emerald-100">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Server Online
+            <div className="flex items-center gap-3 pl-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-slate-900">Operator Admin</p>
+                <p className="text-[10px] text-slate-500 font-medium">Signage Network A</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                <img src="https://picsum.photos/seed/operator/100/100" alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              </div>
             </div>
           </div>
         </div>
@@ -113,6 +128,10 @@ export default function App() {
               {/* Right Column: Jobs & Status */}
               <div className="lg:col-span-4 space-y-8 sticky top-24">
                 <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                  <AssetLibrary />
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                   <JobTracker />
                 </section>
 
@@ -172,6 +191,7 @@ export default function App() {
 
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       <DocumentationModal isOpen={isDocOpen} onClose={() => setIsDocOpen(false)} />
+      {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
       <ComparisonView />
     </div>
   );

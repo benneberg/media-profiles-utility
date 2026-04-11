@@ -3,6 +3,7 @@ import { Asset, Metadata, Job, Preset } from "./types";
 
 interface AppState {
   currentAsset: Asset | null;
+  assets: Asset[];
   metadata: Metadata | null;
   jobs: Job[];
   selectedPreset: Preset | null;
@@ -11,6 +12,8 @@ interface AppState {
   comparisonJobIds: string[];
   
   setCurrentAsset: (asset: Asset | null) => void;
+  addAsset: (asset: Asset) => void;
+  removeAsset: (assetId: string) => void;
   setMetadata: (metadata: Metadata | null) => void;
   addJob: (job: Job) => void;
   updateJob: (jobId: string, updates: Partial<Job>) => void;
@@ -23,6 +26,7 @@ interface AppState {
 
 export const useStore = create<AppState>((set) => ({
   currentAsset: null,
+  assets: [],
   metadata: null,
   jobs: [],
   selectedPreset: null,
@@ -31,6 +35,11 @@ export const useStore = create<AppState>((set) => ({
   comparisonJobIds: [],
 
   setCurrentAsset: (asset) => set({ currentAsset: asset, metadata: null }),
+  addAsset: (asset) => set((state) => ({ assets: [...state.assets, asset] })),
+  removeAsset: (assetId) => set((state) => ({ 
+    assets: state.assets.filter(a => a.assetId !== assetId),
+    currentAsset: state.currentAsset?.assetId === assetId ? null : state.currentAsset
+  })),
   setMetadata: (metadata) => set({ metadata }),
   addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs] })),
   updateJob: (jobId, updates) =>

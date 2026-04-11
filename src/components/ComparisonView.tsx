@@ -75,6 +75,24 @@ export default function ComparisonView() {
                     </div>
                   </div>
 
+                  {/* Thumbnail Strip */}
+                  {job.thumbnailStrip && job.thumbnailStrip.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visual Timeline</p>
+                      <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                        {job.thumbnailStrip.map((url, i) => (
+                          <img 
+                            key={i} 
+                            src={url} 
+                            alt={`Strip ${i}`} 
+                            className="h-16 aspect-video rounded-lg object-cover border border-slate-200 shadow-sm shrink-0 hover:scale-105 transition-transform cursor-zoom-in"
+                            referrerPolicy="no-referrer"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Metadata Table */}
                   <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-4">

@@ -77,6 +77,7 @@ export default function PresetSelector() {
   const { currentAsset, metadata, selectedPreset, setSelectedPreset, addJob, customPresets } = useStore();
   const [isStarting, setIsStarting] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [priority, setPriority] = useState<"low" | "standard" | "high">("standard");
 
   const handleStartJob = async () => {
     if (!currentAsset || !selectedPreset) return;
@@ -87,13 +88,15 @@ export default function PresetSelector() {
         assetId: currentAsset.assetId,
         filename: currentAsset.filename,
         preset: selectedPreset,
+        priority,
       });
 
-      const { jobId } = response.data;
+      const { id } = response.data;
       const newJob: Job = {
-        id: jobId,
+        id,
         status: "queued",
         progress: 0,
+        priority,
         preset: selectedPreset,
         outputFilename: "", // Server will provide this
         createdAt: new Date().toISOString(),
@@ -247,16 +250,37 @@ export default function PresetSelector() {
             ))}
           </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <Info className="w-4 h-4 text-purple-400" />
-              <span>Ready to generate variant with these parameters</span>
+          <div className="mt-6 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <Info className="w-4 h-4 text-purple-400" />
+                <span>Ready to generate variant with these parameters</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Job Priority</span>
+                {(["low", "standard", "high"] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
+                      priority === p 
+                        ? "bg-purple-600 text-white shadow-lg shadow-purple-900/40" 
+                        : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
+
             <button
               onClick={handleStartJob}
               disabled={isStarting}
               className={cn(
-                "px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-all duration-200",
+                "w-full md:w-auto px-8 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all duration-200",
                 isStarting
                   ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                   : "bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-900/20 active:scale-95"

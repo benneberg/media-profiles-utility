@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useStore } from "../store";
 import { Job } from "../types";
-import { Loader2, CheckCircle, AlertCircle, Download, Clock, Zap, ExternalLink, ArrowRightLeft, Trash2 } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Download, Clock, Zap, ExternalLink, ArrowRightLeft, Trash2, Globe } from "lucide-react";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "../lib/utils";
@@ -84,6 +84,20 @@ export default function JobTracker() {
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-gray-400">ID: {job.id.split("-")[0]}</span>
               </div>
+              
+              {job.thumbnailStrip && job.thumbnailStrip.length > 0 && (
+                <div className="flex gap-1 mt-3 overflow-x-auto pb-1 custom-scrollbar">
+                  {job.thumbnailStrip.map((url, i) => (
+                    <img 
+                      key={i} 
+                      src={url} 
+                      alt={`Strip ${i}`} 
+                      className="h-8 aspect-video rounded object-cover border border-slate-100 shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="w-full md:w-48 flex flex-col gap-2">
@@ -116,6 +130,17 @@ export default function JobTracker() {
                   >
                     <ArrowRightLeft className="w-4 h-4" />
                     Compare
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert("Syncing to configured cloud storage...");
+                      // In a real app, this would call an API endpoint
+                    }}
+                    className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center gap-2 text-xs font-bold border border-blue-100"
+                    title="Sync to Cloud"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Sync
                   </button>
                   <a
                     href={`/api/download/${job.id}`}

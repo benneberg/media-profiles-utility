@@ -11,50 +11,50 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function Upload() {
-  const { setCurrentAsset, setMetadata } = useStore();
+  const { setCurrentAsset, setMetadata, addAsset } = useStore();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+    for (const file of acceptedFiles) {
+      setUploading(true);
+      setProgress(0);
+      setError(null);
 
-    setUploading(true);
-    setProgress(0);
-    setError(null);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const formData = new FormData();
-    formData.append("file", file);
+      try {
+        const response = await axios.post("/api/upload", formData, {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            setProgress(percentCompleted);
+          },
+        });
 
-    try {
-      const response = await axios.post("/api/upload", formData, {
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-          setProgress(percentCompleted);
-        },
-      });
+        const asset = response.data;
+        setCurrentAsset(asset);
+        addAsset(asset);
 
-      const asset = response.data;
-      setCurrentAsset(asset);
-
-      // Fetch metadata
-      const metadataResponse = await axios.get(`/api/metadata/${asset.filename}`);
-      setMetadata(metadataResponse.data);
-    } catch (err: any) {
-      console.error("Upload failed:", err);
-      setError(err.response?.data?.error || "Failed to upload file. Please try again.");
-    } finally {
-      setUploading(false);
+        // Fetch metadata
+        const metadataResponse = await axios.get(`/api/metadata/${asset.filename}`);
+        setMetadata(metadataResponse.data);
+      } catch (err: any) {
+        console.error("Upload failed:", err);
+        setError(err.response?.data?.error || "Failed to upload file. Please try again.");
+      } finally {
+        setUploading(false);
+      }
     }
-  }, [setCurrentAsset, setMetadata]);
+  }, [setCurrentAsset, setMetadata, addAsset]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       "video/*": [".mp4", ".mov", ".mkv", ".avi", ".webm"],
     },
-    multiple: false,
+    multiple: true,
     disabled: uploading,
   });
 
