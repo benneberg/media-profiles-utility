@@ -1,6 +1,6 @@
 # MMM - MediaMetaManagement
 
-A professional video metadata inspection and transcoding tool engineered for digital signage, broadcast, and high-performance web workflows.
+A video metadata inspection and transcoding tool engineered for digital signage, broadcast, and high-performance web workflows.
 
 ## Features
 
