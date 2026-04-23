@@ -41,8 +41,9 @@ export default function Upload() {
         const metadataResponse = await axios.get(`/api/metadata/${asset.filename}`);
         setMetadata(metadataResponse.data);
       } catch (err: any) {
-        console.error("Upload failed:", err);
-        setError(err.response?.data?.error || "Failed to upload file. Please try again.");
+        console.error("Upload failed details:", err);
+        const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || "Failed to upload file. Please try again.";
+        setError(errorMessage);
       } finally {
         setUploading(false);
       }

@@ -40,36 +40,46 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   };
 
   useEffect(() => {
-    fetchWebhooks();
-    fetchApiDocs();
-    const saved = localStorage.getItem("cloud_config");
-    if (saved) setCloudConfig(JSON.parse(saved));
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const [webhooksRes, apiDocsRes] = await Promise.all([
+          axios.get("/api/webhooks"),
+          axios.get("/api/docs")
+        ]);
+        if (isMounted) {
+          setWebhooks(Array.isArray(webhooksRes.data) ? webhooksRes.data : []);
+          setApiDocs(apiDocsRes.data);
+        }
+      } catch (err) {
+        console.error("Settings load failed:", err);
+      }
+
+      try {
+        const saved = localStorage.getItem("cloud_config");
+        if (saved && saved !== "undefined" && saved !== "null") {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") {
+            setCloudConfig((prev) => ({ ...prev, ...parsed }));
+          }
+        }
+      } catch (err) {
+        console.error("Local config load failed:", err);
+      }
+    };
+
+    loadData();
+    return () => { isMounted = false; };
   }, []);
-
-  const fetchWebhooks = async () => {
-    try {
-      const response = await axios.get("/api/webhooks");
-      setWebhooks(response.data);
-    } catch (err) {
-      console.error("Failed to fetch webhooks:", err);
-    }
-  };
-
-  const fetchApiDocs = async () => {
-    try {
-      const response = await axios.get("/api/docs");
-      setApiDocs(response.data);
-    } catch (err) {
-      console.error("Failed to fetch API docs:", err);
-    }
-  };
 
   const addWebhook = async () => {
     if (!newWebhook) return;
     try {
       await axios.post("/api/webhooks", { url: newWebhook });
       setNewWebhook("");
-      fetchWebhooks();
+      const response = await axios.get("/api/webhooks");
+      setWebhooks(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Failed to add webhook:", err);
     }
@@ -78,7 +88,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const removeWebhook = async (url: string) => {
     try {
       await axios.delete("/api/webhooks", { data: { url } });
-      fetchWebhooks();
+      const response = await axios.get("/api/webhooks");
+      setWebhooks(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Failed to remove webhook:", err);
     }
@@ -203,7 +214,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
                   <div className="space-y-6">
                     <h4 className="text-[10px] font-black text-black/40 uppercase tracking-widest">Endpoints</h4>
                     <div className="space-y-6">
-                      {apiDocs.endpoints.map((ep) => (
+                      {apiDocs.endpoints?.map((ep) => (
                         <div key={ep.path} className="p-6 bg-white border-4 border-black shadow-brutal-sm space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">

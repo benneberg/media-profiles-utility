@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# MMM - MediaMetaManagement
 
-# Run and deploy your AI Studio app
+A professional video metadata inspection and transcoding tool engineered for digital signage, broadcast, and high-performance web workflows.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/7edcefd1-ceaa-4edf-85bb-64fe8d7f0007
+- **Deep Metadata Inspection**: extract complete stream information using `ffprobe`.
+- **Signage Compliance Score**: Automated analysis of video files against digital signage playback standards (SoC, hardware players).
+- **Custom Transcoding**: Precise control over GOP, bitrates, and containers via a Neobrutalist design interface.
+- **A/B Testing**: Side-by-side comparison of different transcoding variants to find the perfect quality/size balance.
+- **Asset Library**: Track and manage your media assets locally.
+- **Webhooks**: Automated notifications for job completion or failure.
+- **Cloud Sync**: (Configurable) Sync outputs to S3, GCS, or Azure.
 
-## Run Locally
+## Technical Stack
 
-**Prerequisites:**  Node.js
+- **Frontend**: React 19, Vite, Tailwind CSS (Neobrutalist & Glassmorphic UI), Framer Motion.
+- **Backend**: Node.js, Express, Multer, Fluent-FFMPEG.
+- **State Management**: Zustand.
 
+## Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. **Upload**: Drag and drop a video file.
+2. **Analyze**: Review the technical metadata and compatibility score.
+3. **Transcode**: Select a preset or create custom settings.
+4. **Compare**: Use the A/B testing tool to compare variants.
+
+## Current Status
+
+- **UI/UX**: Fully redesigned with a Neobrutalist aesthetic, optimized for both desktop and mobile.
+- **Performance**: Support for large file uploads (up to 500MB).
+- **Stability**: Hardened upload process with better error handling and increased timeouts for deep file analysis.
