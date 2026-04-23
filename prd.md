@@ -1,9 +1,9 @@
-# VideoMeta Pro - Product Requirements Document (PRD)
+# MMM MediaMetaManagement - Product Requirements Document (PRD)
 
 ## 1. Product Summary
 
 ### Overview
-VideoMeta Pro is a media compliance and transformation platform for digital signage and AV workflows. It analyzes video assets, validates them against playback profiles, explains compatibility risks, and generates compliant variants.
+MMM MediaMetaManagement is a media compliance and transformation platform for digital signage and AV workflows. It analyzes video assets, validates them against playback profiles, explains compatibility risks, and generates compliant variants.
 
 ### Core Value
 - Deep technical metadata extraction

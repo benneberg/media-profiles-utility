@@ -103,6 +103,7 @@ export interface Job {
   status: "queued" | "processing" | "completed" | "failed";
   progress: number;
   priority: "low" | "standard" | "high";
+  testId?: string;
   preset: Preset;
   outputFilename: string;
   thumbnailUrl?: string;

@@ -91,29 +91,29 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-100">
-              <Zap className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-2xl border-4 border-black shadow-brutal-lg overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+        <div className="px-8 py-6 border-b-4 border-black flex items-center justify-between bg-accent">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black shadow-brutal-sm">
+              <Zap className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">System Settings</h2>
-              <p className="text-xs text-slate-500 font-medium">Automation & API Configuration</p>
+              <h2 className="text-xl font-black text-black uppercase tracking-tighter">System Settings</h2>
+              <p className="text-[10px] text-black/40 font-black uppercase tracking-widest">Automation & API Configuration</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center hover:bg-black hover:text-white transition-all">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="flex border-b border-slate-100 px-8">
+        <div className="flex border-b-4 border-black bg-white">
           <button
             onClick={() => setActiveTab("webhooks")}
             className={cn(
-              "px-6 py-4 text-sm font-bold transition-all border-b-2",
-              activeTab === "webhooks" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-600"
+              "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-r-4 border-black",
+              activeTab === "webhooks" ? "bg-black text-white" : "bg-white text-black/40 hover:text-black"
             )}
           >
             Webhooks
@@ -121,112 +121,112 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => setActiveTab("api")}
             className={cn(
-              "px-6 py-4 text-sm font-bold transition-all border-b-2",
-              activeTab === "api" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-600"
+              "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-r-4 border-black",
+              activeTab === "api" ? "bg-black text-white" : "bg-white text-black/40 hover:text-black"
             )}
           >
-            API Documentation
+            API Docs
           </button>
           <button
             onClick={() => setActiveTab("cloud")}
             className={cn(
-              "px-6 py-4 text-sm font-bold transition-all border-b-2",
-              activeTab === "cloud" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400 hover:text-slate-600"
+              "flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all",
+              activeTab === "cloud" ? "bg-black text-white" : "bg-white text-black/40 hover:text-black"
             )}
           >
-            Cloud Storage
+            Cloud
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-8 bg-offwhite custom-scrollbar">
           {activeTab === "webhooks" ? (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-slate-900">Register New Webhook</h3>
-                <p className="text-xs text-slate-500">We'll send a POST request to this URL whenever a job completes or fails.</p>
-                <div className="flex gap-2 mt-4">
+            <div className="space-y-10">
+              <div className="space-y-4">
+                <h3 className="text-sm font-black text-black uppercase tracking-tighter">Register New Webhook</h3>
+                <p className="text-[10px] text-black/50 font-black uppercase tracking-widest leading-relaxed">We'll send a POST request to this URL whenever a job completes or fails.</p>
+                <div className="flex gap-4 mt-6">
                   <input
                     type="url"
                     placeholder="https://your-api.com/webhook"
                     value={newWebhook}
                     onChange={(e) => setNewWebhook(e.target.value)}
-                    className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="flex-1 px-4 py-3 border-2 border-black bg-white text-sm font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   />
                   <button
                     onClick={addWebhook}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                    className="w-14 h-14 bg-black text-white border-2 border-black flex items-center justify-center hover:bg-accent hover:text-black transition-all shadow-brutal-sm hover:shadow-none active:translate-x-1 active:translate-y-1"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-6 h-6" />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-900">Active Webhooks</h3>
+              <div className="space-y-6">
+                <h3 className="text-sm font-black text-black uppercase tracking-tighter">Active Webhooks</h3>
                 {webhooks.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {webhooks.map((url) => (
-                      <div key={url} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <Globe className="w-4 h-4 text-slate-400" />
-                          <span className="text-xs font-mono text-slate-600 truncate">{url}</span>
+                      <div key={url} className="flex items-center justify-between p-4 bg-white border-2 border-black shadow-brutal-sm group">
+                        <div className="flex items-center gap-4 overflow-hidden">
+                          <Globe className="w-5 h-5 text-black/20" />
+                          <span className="text-[10px] font-black text-black uppercase tracking-widest truncate">{url}</span>
                         </div>
                         <button
                           onClick={() => removeWebhook(url)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          className="p-2 text-black/20 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="py-12 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-2xl">
-                    <Globe className="w-12 h-12 mb-3 opacity-20" />
-                    <p className="text-sm font-medium">No webhooks registered</p>
+                  <div className="py-16 flex flex-col items-center justify-center text-black/10 border-4 border-dashed border-black bg-white">
+                    <Globe className="w-16 h-16 mb-4 opacity-10" />
+                    <p className="text-xs font-black uppercase tracking-widest">No webhooks registered</p>
                   </div>
                 )}
               </div>
             </div>
           ) : activeTab === "api" ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {apiDocs && (
                 <>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-900">{apiDocs.name}</h3>
-                      <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-widest">v{apiDocs.version}</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-xl font-black text-black uppercase tracking-tighter">{apiDocs.name}</h3>
+                      <span className="px-2 py-1 bg-accent border-2 border-black text-[10px] font-black uppercase tracking-widest">v{apiDocs.version}</span>
                     </div>
-                    <p className="text-sm text-slate-500">{apiDocs.description}</p>
+                    <p className="text-xs font-black text-black/50 uppercase tracking-widest leading-relaxed">{apiDocs.description}</p>
                   </div>
 
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Endpoints</h4>
-                    <div className="space-y-4">
+                  <div className="space-y-6">
+                    <h4 className="text-[10px] font-black text-black/40 uppercase tracking-widest">Endpoints</h4>
+                    <div className="space-y-6">
                       {apiDocs.endpoints.map((ep) => (
-                        <div key={ep.path} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3">
+                        <div key={ep.path} className="p-6 bg-white border-4 border-black shadow-brutal-sm space-y-4">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-4">
                               <span className={cn(
-                                "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest",
-                                ep.method === "POST" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                                "px-2 py-1 border-2 border-black text-[10px] font-black uppercase tracking-widest",
+                                ep.method === "POST" ? "bg-accent text-black" : "bg-black text-white"
                               )}>
                                 {ep.method}
                               </span>
-                              <code className="text-xs font-mono font-bold text-slate-700">{ep.path}</code>
+                              <code className="text-xs font-black text-black uppercase tracking-widest">{ep.path}</code>
                             </div>
                             <button
                               onClick={() => copyToClipboard(ep.path)}
-                              className="text-slate-400 hover:text-slate-600 transition-colors"
+                              className="text-black/20 hover:text-black transition-colors"
                             >
-                              {copied === ep.path ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                              {copied === ep.path ? <Check className="w-5 h-5 text-accent" /> : <Copy className="w-5 h-5" />}
                             </button>
                           </div>
-                          <p className="text-xs text-slate-500">{ep.description}</p>
+                          <p className="text-[10px] text-black/50 font-black uppercase tracking-widest leading-relaxed">{ep.description}</p>
                           {ep.body && (
-                            <div className="space-y-1.5">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Request Body</p>
-                              <pre className="p-2 rounded-lg bg-slate-900 text-blue-400 text-[10px] font-mono overflow-x-auto">
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-black text-black/40 uppercase tracking-widest">Request Body</p>
+                              <pre className="p-4 bg-black text-accent text-[10px] font-black uppercase tracking-widest overflow-x-auto border-2 border-black">
                                 {ep.body}
                               </pre>
                             </div>
@@ -239,84 +239,84 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
               )}
             </div>
           ) : (
-            <div className="space-y-8">
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-slate-900">Cloud Storage Integration</h3>
-                <p className="text-xs text-slate-500">Automatically sync completed variants to your cloud provider.</p>
+            <div className="space-y-10">
+              <div className="space-y-4">
+                <h3 className="text-sm font-black text-black uppercase tracking-tighter">Cloud Storage Integration</h3>
+                <p className="text-[10px] text-black/50 font-black uppercase tracking-widest leading-relaxed">Automatically sync completed variants to your cloud provider.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Provider</label>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-black/40 uppercase tracking-widest">Provider</label>
                   <select
                     value={cloudConfig.provider}
                     onChange={(e) => setCloudConfig({ ...cloudConfig, provider: e.target.value })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border-2 border-black bg-white text-xs font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   >
                     <option value="s3">Amazon S3</option>
                     <option value="gcs">Google Cloud Storage</option>
                     <option value="azure">Azure Blob Storage</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Region</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-black/40 uppercase tracking-widest">Region</label>
                   <input
                     type="text"
                     value={cloudConfig.region}
                     onChange={(e) => setCloudConfig({ ...cloudConfig, region: e.target.value })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border-2 border-black bg-white text-xs font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   />
                 </div>
-                <div className="col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bucket Name</label>
+                <div className="col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-black/40 uppercase tracking-widest">Bucket Name</label>
                   <input
                     type="text"
                     value={cloudConfig.bucket}
                     onChange={(e) => setCloudConfig({ ...cloudConfig, bucket: e.target.value })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border-2 border-black bg-white text-xs font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Access Key</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-black/40 uppercase tracking-widest">Access Key</label>
                   <input
                     type="password"
                     value={cloudConfig.accessKey}
                     onChange={(e) => setCloudConfig({ ...cloudConfig, accessKey: e.target.value })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border-2 border-black bg-white text-xs font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secret Key</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-black/40 uppercase tracking-widest">Secret Key</label>
                   <input
                     type="password"
                     value={cloudConfig.secretKey}
                     onChange={(e) => setCloudConfig({ ...cloudConfig, secretKey: e.target.value })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border-2 border-black bg-white text-xs font-black uppercase tracking-widest focus:outline-none focus:bg-accent transition-all"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 italic">
-                  <Info className="w-3 h-3" />
-                  Credentials are stored locally in your browser.
+              <div className="pt-8 border-t-2 border-black flex items-center justify-between">
+                <div className="flex items-center gap-3 text-[10px] font-black text-black/40 uppercase tracking-widest italic">
+                  <Info className="w-4 h-4" />
+                  Credentials are stored locally.
                 </div>
                 <button
                   onClick={saveCloudConfig}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                  className="px-8 py-3 bg-black text-white border-2 border-black font-black uppercase tracking-widest hover:bg-accent hover:text-black transition-all shadow-brutal-sm hover:shadow-none active:translate-x-1 active:translate-y-1 flex items-center gap-3"
                 >
-                  {copied === "cloud_saved" ? <Check className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-                  {copied === "cloud_saved" ? "Saved" : "Save Configuration"}
+                  {copied === "cloud_saved" ? <Check className="w-5 h-5" /> : <Zap className="w-5 h-5" />}
+                  {copied === "cloud_saved" ? "Saved" : "Save Config"}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <div className="px-8 py-6 bg-white border-t-4 border-black flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+            className="brutal-btn bg-black text-white px-10 py-2"
           >
             Done
           </button>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useStore } from "../store";
 import { 
   FileVideo, Info, Clock, HardDrive, Hash, Layers, Music, Subtitles, 
-  FileJson, FileText, Download, AlertTriangle, CheckCircle2, Copy, Terminal
+  FileJson, FileText, Download, AlertTriangle, CheckCircle2, Copy, Terminal, Plus
 } from "lucide-react";
 import { formatBytes, cn } from "../lib/utils";
 import { Preset } from "../types";
@@ -58,7 +58,7 @@ export default function MetadataViewer() {
     link.remove();
   };
 
-  const handleCloneSettings = () => {
+  const handleSaveAsPreset = () => {
     if (!videoStream || !videoStream.r_frame_rate) return;
     
     let fps = 30;
@@ -71,9 +71,9 @@ export default function MetadataViewer() {
     }
 
     const newPreset: Preset = {
-      id: `clone-${Date.now()}`,
-      name: `Clone: ${currentAsset.originalName}`,
-      description: `Custom preset extracted from ${currentAsset.originalName}`,
+      id: `preset-${Date.now()}`,
+      name: `${currentAsset.originalName} Profile`,
+      description: `Technical profile extracted from ${currentAsset.originalName}`,
       outputContainer: "mp4",
       video: {
         codec: videoStream.codec_name === "h264" ? "libx264" : videoStream.codec_name === "hevc" ? "libx265" : "libx264",
@@ -89,175 +89,180 @@ export default function MetadataViewer() {
       } : undefined,
     };
 
-    addCustomPreset(newPreset);
-    setIsPresetEditorOpen(true);
+    setIsPresetEditorOpen(true, newPreset);
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-10 sm:space-y-12">
       {/* Header & Actions */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-100">
-            <FileVideo className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="w-16 h-16 bg-black border-2 border-black flex items-center justify-center text-white shadow-brutal-sm">
+            <FileVideo className="w-8 h-8" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{currentAsset.originalName}</h2>
+          <div className="min-w-0">
+            <h2 className="text-2xl sm:text-4xl font-black text-black tracking-tighter truncate uppercase">{currentAsset.originalName}</h2>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Operator Intelligence</span>
-              <div className="h-1 w-1 rounded-full bg-slate-300" />
-              <span className="text-xs text-slate-500 font-medium">Source: {metadata.format.format_name.split(',')[0].toUpperCase()}</span>
+              <span className="text-[10px] font-black text-accent uppercase tracking-widest">Operator Intelligence</span>
+              <div className="h-1 w-1 rounded-full bg-black" />
+              <span className="text-[10px] text-black/50 font-black uppercase tracking-widest truncate">Source: {metadata.format.format_name.split(',')[0].toUpperCase()}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button 
-            onClick={() => setIsRawView(!isRawView)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
-              isRawView 
-                ? "bg-slate-900 text-white border-slate-900" 
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            {isRawView ? "Structured View" : "Raw JSON"}
-          </button>
-          
-          <div className="h-6 w-[1px] bg-slate-200 mx-1" />
-
-          <button onClick={exportToJson} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Export JSON">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          <button onClick={exportToJson} className="p-3 bg-white border-2 border-black hover:bg-black hover:text-white transition-all shadow-brutal-sm active:shadow-none active:translate-x-0.5 active:translate-y-0.5" title="Export JSON">
             <FileJson className="w-5 h-5" />
           </button>
-          <button onClick={exportToCsv} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Export CSV">
+          <button onClick={exportToCsv} className="p-3 bg-white border-2 border-black hover:bg-black hover:text-white transition-all shadow-brutal-sm active:shadow-none active:translate-x-0.5 active:translate-y-0.5" title="Export CSV">
             <FileText className="w-5 h-5" />
           </button>
           
           <button 
-            onClick={handleCloneSettings}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all border border-blue-100 ml-2"
+            onClick={handleSaveAsPreset}
+            className="brutal-btn bg-accent text-black"
           >
-            <Copy className="w-3.5 h-3.5" />
-            Clone Settings
+            <Copy className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">Save as Preset</span>
           </button>
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center border-2 border-black bg-black p-1 w-fit">
+        <button
+          onClick={() => setIsRawView(false)}
+          className={cn(
+            "px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+            !isRawView ? "bg-white text-black" : "text-white hover:text-accent"
+          )}
+        >
+          Structured
+        </button>
+        <button
+          onClick={() => setIsRawView(true)}
+          className={cn(
+            "px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+            isRawView ? "bg-white text-black" : "text-white hover:text-accent"
+          )}
+        >
+          Raw JSON
+        </button>
+      </div>
+
       {isRawView ? (
-        <div className="bg-slate-900 rounded-2xl p-6 overflow-hidden border border-slate-800 shadow-2xl">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-2 text-slate-400">
-              <Terminal className="w-4 h-4" />
-              <span className="text-xs font-mono font-bold uppercase tracking-widest">ffprobe_output.json</span>
+        <div className="bg-black border-4 border-black shadow-brutal-lg p-8 overflow-hidden">
+          <div className="flex items-center justify-between mb-6 border-b-2 border-white/10 pb-6">
+            <div className="flex items-center gap-3 text-white/50">
+              <Terminal className="w-5 h-5" />
+              <span className="text-xs font-mono font-black uppercase tracking-widest">ffprobe_output.json</span>
             </div>
             <button 
               onClick={() => navigator.clipboard.writeText(JSON.stringify(metadata, null, 2))}
-              className="text-xs text-slate-500 hover:text-white transition-colors flex items-center gap-1"
+              className="text-xs text-white/50 hover:text-accent transition-colors flex items-center gap-2 font-black uppercase tracking-widest"
             >
-              <Copy className="w-3 h-3" /> Copy
+              <Copy className="w-4 h-4" /> Copy
             </button>
           </div>
-          <pre className="text-xs font-mono text-blue-400 overflow-x-auto max-h-[600px] custom-scrollbar">
+          <pre className="text-xs font-mono text-accent overflow-x-auto max-h-[600px] custom-scrollbar selection:bg-white selection:text-black">
             {JSON.stringify(metadata, null, 2)}
           </pre>
         </div>
       ) : (
         <>
-          {/* Layer 1: Operational Summary (Decision Layer) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Layer 1: Operational Summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <div className={cn(
-              "lg:col-span-2 p-8 rounded-3xl border flex flex-col md:flex-row gap-8 items-center md:items-start transition-all",
-              metadata.validation?.status === "pass" 
-                ? "bg-emerald-50 border-emerald-100" 
-                : metadata.validation?.status === "error"
-                ? "bg-red-50 border-red-100"
-                : "bg-amber-50 border-amber-100"
+              "lg:col-span-2 p-10 border-4 border-black shadow-brutal flex flex-col md:flex-row gap-10 items-center md:items-start transition-all",
+              metadata.validation?.status === "pass" ? "bg-white" : "bg-white"
             )}>
               <div className={cn(
-                "w-24 h-24 rounded-full shrink-0 flex items-center justify-center border-4",
-                metadata.validation?.status === "pass" ? "bg-emerald-100 border-emerald-200 text-emerald-600" : 
-                metadata.validation?.status === "error" ? "bg-red-100 border-red-200 text-red-600" :
-                "bg-amber-100 border-amber-200 text-amber-600"
+                "w-32 h-32 border-4 border-black shrink-0 flex items-center justify-center shadow-brutal-sm",
+                metadata.validation?.status === "pass" ? "bg-accent" : 
+                metadata.validation?.status === "error" ? "bg-red-500" :
+                "bg-amber-400"
               )}>
-                {metadata.validation?.status === "pass" ? <CheckCircle2 className="w-12 h-12" /> : <AlertTriangle className="w-12 h-12" />}
+                {metadata.validation?.status === "pass" ? <CheckCircle2 className="w-16 h-16 text-black" /> : <AlertTriangle className="w-16 h-16 text-black" />}
               </div>
               
-              <div className="flex-1 space-y-4 text-center md:text-left">
+              <div className="flex-1 space-y-6 text-center md:text-left">
                 <div>
-                  <h3 className={cn(
-                    "text-2xl font-black tracking-tight",
-                    metadata.validation?.status === "pass" ? "text-emerald-900" : 
-                    metadata.validation?.status === "error" ? "text-red-900" :
-                    "text-amber-900"
-                  )}>
-                    {metadata.validation?.status === "pass" ? "Ready for Digital Signage" : 
-                     metadata.validation?.status === "error" ? "Critical Issues Detected" :
-                     "Minor Issues Detected"}
+                  <h3 className="text-4xl font-black tracking-tighter text-black uppercase leading-none">
+                    {metadata.validation?.status === "pass" ? "Ready for Signage" : 
+                     metadata.validation?.status === "error" ? "Critical Issues" :
+                     "Minor Issues"}
                   </h3>
-                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 mt-2">
-                    <span className="px-2 py-1 rounded bg-white/50 text-xs font-bold border border-current/10">
+                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-4">
+                    <span className="px-3 py-1 bg-black text-white text-[10px] font-black tracking-widest">
                       {videoStream?.width}x{videoStream?.height}
                     </span>
-                    <span className="px-2 py-1 rounded bg-white/50 text-xs font-bold border border-current/10">
+                    <span className="px-3 py-1 bg-black text-white text-[10px] font-black tracking-widest">
                       {videoStream?.r_frame_rate.split('/')[0]}fps
                     </span>
-                    <span className="px-2 py-1 rounded bg-white/50 text-xs font-bold border border-current/10">
+                    <span className="px-3 py-1 bg-black text-white text-[10px] font-black tracking-widest">
                       {videoStream?.codec_name.toUpperCase()}
                     </span>
-                    <span className="px-2 py-1 rounded bg-white/50 text-xs font-bold border border-current/10">
+                    <span className="px-3 py-1 bg-black text-white text-[10px] font-black tracking-widest">
                       {formatDuration(metadata.format.duration)}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-current/10">
-                  <SummaryItem label="Compatibility" value={metadata.validation?.score + "%"} color={metadata.validation?.status === "pass" ? "emerald" : "amber"} />
-                  <SummaryItem label="Network Load" value={metadata.analysis?.bitrate_category.toUpperCase() || "N/A"} color="blue" />
-                  <SummaryItem label="Orientation" value={metadata.analysis?.orientation.toUpperCase() || "N/A"} color="slate" />
-                  <SummaryItem label="Audio" value={metadata.analysis?.audio_present ? "Present" : "None ✅"} color={metadata.analysis?.audio_present ? "slate" : "emerald"} />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t-2 border-black/10">
+                  <SummaryItem label="Compatibility" value={metadata.validation?.score + "%"} color="accent" />
+                  <SummaryItem label="Network Load" value={metadata.analysis?.bitrate_category.toUpperCase() || "N/A"} color="black" />
+                  <SummaryItem label="Orientation" value={metadata.analysis?.orientation.toUpperCase() || "N/A"} color="black" />
+                  <div className="flex flex-col justify-center">
+                    <button 
+                      onClick={handleSaveAsPreset}
+                      className="brutal-btn bg-black text-white text-[10px] py-1.5"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Clone
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Validation Rules List */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm flex flex-col gap-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Compliance Rules</h4>
-              <div className="space-y-3 overflow-y-auto max-h-[200px] pr-2 custom-scrollbar">
+            <div className="bg-white border-4 border-black p-8 shadow-brutal flex flex-col gap-6">
+              <h4 className="text-xs font-black text-black uppercase tracking-widest border-b-2 border-black pb-4">Compliance Rules</h4>
+              <div className="space-y-6 overflow-y-auto max-h-[250px] pr-2 custom-scrollbar">
                 {metadata.validation?.rules.map((rule) => (
-                  <div key={rule.id} className="flex gap-3 items-start group">
+                  <div key={rule.id} className="flex gap-4 items-start group">
                     <div className={cn(
-                      "mt-1 w-1.5 h-1.5 rounded-full shrink-0",
-                      rule.severity === "error" ? "bg-red-500" : rule.severity === "warning" ? "bg-amber-500" : "bg-blue-500"
+                      "mt-1 w-3 h-3 border-2 border-black shrink-0",
+                      rule.severity === "error" ? "bg-red-500" : rule.severity === "warning" ? "bg-amber-400" : "bg-accent"
                     )} />
                     <div>
-                      <p className="text-xs font-bold text-slate-800">{rule.message}</p>
-                      <p className="text-[10px] text-slate-500 italic mt-0.5 group-hover:text-blue-600 transition-colors">Fix: {rule.recommendation}</p>
+                      <p className="text-xs font-black text-black leading-tight uppercase tracking-tight">{rule.message}</p>
+                      <p className="text-[10px] text-black/50 font-bold mt-1 uppercase tracking-widest">Fix: {rule.recommendation}</p>
                     </div>
                   </div>
                 ))}
                 {(!metadata.validation?.rules || metadata.validation.rules.length === 0) && (
-                  <div className="flex flex-col items-center justify-center py-8 text-slate-300">
-                    <CheckCircle2 className="w-8 h-8 mb-2 opacity-20" />
-                    <p className="text-xs font-medium">All rules passed</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-black/20">
+                    <CheckCircle2 className="w-12 h-12 mb-4" />
+                    <p className="text-xs font-black uppercase tracking-widest">All rules passed</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Layer 2: Technical Summary (Grouped by Intent) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={<Clock />} label="Duration" value={formatDuration(metadata.format.duration)} />
-            <StatCard icon={<HardDrive />} label="File Size" value={formatBytes(parseInt(metadata.format.size))} />
-            <StatCard icon={<Hash />} label="Format" value={metadata.format.format_name.toUpperCase()} />
-            <StatCard icon={<Layers />} label="Streams" value={`${metadata.format.nb_streams} total`} />
+          {/* Layer 2: Technical Summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard icon={<Clock className="w-6 h-6" />} label="Duration" value={formatDuration(metadata.format.duration)} />
+            <StatCard icon={<HardDrive className="w-6 h-6" />} label="File Size" value={formatBytes(parseInt(metadata.format.size))} />
+            <StatCard icon={<Hash className="w-6 h-6" />} label="Format" value={metadata.format.format_name.toUpperCase().split(',')[0]} />
+            <StatCard icon={<Layers className="w-6 h-6" />} label="Streams" value={`${metadata.format.nb_streams}`} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {videoStream && (
-              <Section title="Video Engineering" icon={<Layers className="w-5 h-5" />}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8">
+              <Section title="Video Engineering" icon={<Layers className="w-6 h-6" />}>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-10">
                   <Detail label="Codec" value={videoStream.codec_name.toUpperCase()} />
                   <Detail label="Resolution" value={`${videoStream.width} × ${videoStream.height}`} />
                   <Detail label="Aspect Ratio" value={videoStream.display_aspect_ratio || "N/A"} />
@@ -271,12 +276,12 @@ export default function MetadataViewer() {
               </Section>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-10">
               {audioStreams.length > 0 ? (
-                <Section title="Audio Engineering" icon={<Music className="w-5 h-5" />}>
-                  <div className="space-y-8">
+                <Section title="Audio Engineering" icon={<Music className="w-6 h-6" />}>
+                  <div className="space-y-10">
                     {audioStreams.map((stream, i) => (
-                      <div key={i} className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8 border-b border-slate-100 last:border-0 pb-6 last:pb-0">
+                      <div key={i} className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-10 border-b-2 border-black/5 last:border-0 pb-8 last:pb-0">
                         <Detail label="Codec" value={stream.codec_name.toUpperCase()} />
                         <Detail label="Channels" value={`${stream.channels} (${stream.channel_layout})`} />
                         <Detail label="Sample Rate" value={`${stream.sample_rate} Hz`} />
@@ -287,17 +292,17 @@ export default function MetadataViewer() {
                   </div>
                 </Section>
               ) : (
-                <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-8 flex flex-col items-center justify-center text-center">
-                  <Music className="w-8 h-8 text-slate-300 mb-2" />
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No Audio Detected</p>
-                  <p className="text-xs text-slate-400 mt-1">Silent asset — Ideal for signage</p>
+                <div className="bg-white border-4 border-black border-dashed p-12 flex flex-col items-center justify-center text-center">
+                  <Music className="w-12 h-12 text-black/20 mb-4" />
+                  <p className="text-sm font-black text-black uppercase tracking-widest">No Audio Detected</p>
+                  <p className="text-[10px] text-black/40 mt-2 font-bold uppercase tracking-widest">Silent asset — Ideal for signage</p>
                 </div>
               )}
 
               {/* Advanced Insights Layer */}
               {metadata.advanced && (
-                <Section title="Advanced Insights" icon={<Info className="w-5 h-5" />}>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8">
+                <Section title="Advanced Insights" icon={<Info className="w-6 h-6" />}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-10">
                     <Detail label="GOP Interval" value={`${metadata.advanced.gop?.keyframe_interval} frames`} />
                     <Detail label="Seekability" value={metadata.advanced.gop?.seekability.toUpperCase() || "N/A"} />
                     <Detail label="Network Risk" value={metadata.advanced.network?.risk.toUpperCase() || "N/A"} />
@@ -317,28 +322,28 @@ export default function MetadataViewer() {
 
 function SummaryItem({ label, value, color }: { label: string; value: string; color: string }) {
   const colorClasses: Record<string, string> = {
-    emerald: "text-emerald-700",
-    amber: "text-amber-700",
-    blue: "text-blue-700",
-    slate: "text-slate-700",
-    red: "text-red-700",
+    accent: "text-accent",
+    black: "text-black",
+    red: "text-red-600",
   };
 
   return (
     <div>
-      <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className={cn("text-sm font-black", colorClasses[color] || "text-slate-900")}>{value}</p>
+      <p className="text-[10px] font-black text-black/40 uppercase tracking-widest mb-1">{label}</p>
+      <p className={cn("text-xl font-black tracking-tighter", colorClasses[color] || "text-black")}>{value}</p>
     </div>
   );
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-      <div className="p-3 rounded-xl bg-slate-50 text-slate-400">{icon}</div>
+    <div className="bg-white p-6 border-4 border-black shadow-brutal flex items-center gap-6 group hover:-translate-y-1 transition-all">
+      <div className="w-14 h-14 bg-offwhite border-2 border-black flex items-center justify-center text-black group-hover:bg-accent transition-colors shadow-brutal-sm">
+        {icon}
+      </div>
       <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-        <p className="text-lg font-bold text-slate-900">{value}</p>
+        <p className="text-[10px] font-black text-black/40 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-xl font-black text-black tracking-tighter uppercase">{value}</p>
       </div>
     </div>
   );
@@ -346,14 +351,14 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-slate-400">{icon}</div>
-          <h3 className="font-bold text-slate-900 tracking-tight">{title}</h3>
+    <div className="bg-white border-4 border-black shadow-brutal overflow-hidden">
+      <div className="px-8 py-6 border-b-4 border-black bg-black flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="text-accent">{icon}</div>
+          <h3 className="font-black text-white uppercase tracking-widest text-sm">{title}</h3>
         </div>
       </div>
-      <div className="p-8">{children}</div>
+      <div className="p-10">{children}</div>
     </div>
   );
 }
@@ -361,8 +366,8 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
-      <p className="text-sm font-semibold text-slate-900">{value}</p>
+      <p className="text-[10px] font-black text-black/40 uppercase tracking-widest mb-2">{label}</p>
+      <p className="text-sm font-black text-black uppercase tracking-tight">{value}</p>
     </div>
   );
 }

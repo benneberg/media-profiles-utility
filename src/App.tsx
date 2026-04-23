@@ -7,89 +7,117 @@ import AssetLibrary from "./components/AssetLibrary";
 import AboutModal from "./components/AboutModal";
 import DocumentationModal from "./components/DocumentationModal";
 import SettingsModal from "./components/SettingsModal";
+import PresetEditor from "./components/PresetEditor";
+import ABTestCreator from "./components/ABTestCreator";
 import ComparisonView from "./components/ComparisonView";
 import { useStore } from "./store";
-import { Video, Settings, Layout, Layers, Zap, Info, Github, Monitor, Globe } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Video, Settings, Layout, Layers, Zap, Info, Github, Monitor, Globe, Beaker, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "./lib/utils";
 
 export default function App() {
-  const { currentAsset, metadata, setIsPresetEditorOpen } = useStore();
+  const { currentAsset, metadata, setIsPresetEditorOpen, isPresetEditorOpen, setCurrentAsset, editingPreset } = useStore();
   const [isAboutOpen, setIsAboutOpen] = React.useState(false);
   const [isDocOpen, setIsDocOpen] = React.useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [isABTestOpen, setIsABTestOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-offwhite text-black font-sans selection:bg-accent selection:text-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-md bg-white/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-              <Video className="w-6 h-6" />
+      <header className="glass-header">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-black border-2 border-black flex items-center justify-center text-white shadow-brutal-sm">
+              <Video className="w-7 h-7" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-900">Video Studio</h1>
-              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] -mt-1">Metadata & Transcoding</p>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-black tracking-tighter text-black leading-none">MMM</h1>
+              <p className="text-[10px] font-bold text-accent uppercase tracking-[0.3em] mt-1">MediaMetaManagement</p>
             </div>
           </div>
           
-          <nav className="hidden md:flex items-center gap-6">
-            <NavLink icon={<Layout className="w-4 h-4" />} label="Dashboard" active />
-            <NavLink icon={<Settings className="w-4 h-4" />} label="Presets" />
-            <NavLink icon={<Layers className="w-4 h-4" />} label="Jobs" />
+          <nav className="hidden lg:flex items-center gap-8">
+            <NavLink 
+              icon={<Layout className="w-4 h-4" />} 
+              label="Dashboard" 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              active 
+            />
+            <NavLink 
+              icon={<Settings className="w-4 h-4" />} 
+              label="Presets" 
+              onClick={() => document.getElementById('presets-section')?.scrollIntoView({ behavior: 'smooth' })}
+            />
+            <NavLink 
+              icon={<Layers className="w-4 h-4" />} 
+              label="Jobs" 
+              onClick={() => document.getElementById('jobs-section')?.scrollIntoView({ behavior: 'smooth' })}
+            />
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setCurrentAsset(null)}
+              className="brutal-btn bg-white text-black"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline ml-2">New Upload</span>
+            </button>
+            <button 
+              onClick={() => setIsABTestOpen(true)}
+              className="brutal-btn-accent"
+            >
+              <Beaker className="w-4 h-4" />
+              <span className="hidden sm:inline ml-2">A/B Test</span>
+            </button>
+            <div className="h-8 w-[2px] bg-black hidden sm:block mx-2" />
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all rounded-none"
               title="Settings"
             >
               <Zap className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setIsAboutOpen(true)}
-              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all rounded-none hidden sm:block"
             >
               <Info className="w-5 h-5" />
             </button>
-            <div className="h-8 w-[1px] bg-slate-200" />
-            <div className="flex items-center gap-3 pl-2">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-900">Operator Admin</p>
-                <p className="text-[10px] text-slate-500 font-medium">Signage Network A</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                <img src="https://picsum.photos/seed/operator/100/100" alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
         <AnimatePresence mode="wait">
           {!currentAsset ? (
             <motion.div
               key="upload"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-3xl mx-auto text-center space-y-12"
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ type: "spring", damping: 20, stiffness: 100 }}
+              className="max-w-4xl mx-auto text-center space-y-16"
             >
-              <div className="space-y-4">
-                <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl">
-                  Professional Video <span className="text-blue-600">Processing</span>
-                </h2>
-                <p className="text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
-                  Extract detailed technical metadata and transcode your video assets using production-grade presets for digital signage and web.
+              <div className="space-y-6">
+                <motion.h2 
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  className="text-5xl sm:text-7xl font-black text-black tracking-tighter leading-none"
+                >
+                  MMM <span className="text-accent">STUDIO</span>
+                </motion.h2>
+                <p className="text-lg sm:text-xl text-black/60 max-w-2xl mx-auto leading-relaxed font-medium">
+                  Professional video metadata inspection and transcoding. Engineered for digital signage, broadcast, and high-performance web workflows.
                 </p>
               </div>
               
-              <Upload />
+              <div className="p-2 bg-black shadow-brutal-lg">
+                <Upload />
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
                 <FeatureCard 
                   icon={<Monitor className="w-6 h-6" />}
                   title="Digital Signage"
@@ -112,44 +140,47 @@ export default function App() {
               key="studio"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start"
             >
               {/* Left Column: Metadata & Presets */}
-              <div className="lg:col-span-8 space-y-8">
-                <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+              <div className="lg:col-span-8 space-y-10">
+                <section id="metadata-section" className="brutal-card p-6 sm:p-10">
                   <MetadataViewer />
                 </section>
                 
-                <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                <section id="presets-section" className="brutal-card p-6 sm:p-10">
                   <PresetSelector />
                 </section>
               </div>
 
               {/* Right Column: Jobs & Status */}
-              <div className="lg:col-span-4 space-y-8 sticky top-24">
-                <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+              <div className="lg:col-span-4 space-y-10 sticky top-28">
+                <section className="brutal-card p-6 sm:p-8">
                   <AssetLibrary />
                 </section>
 
-                <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                <section id="jobs-section" className="brutal-card p-6 sm:p-8">
                   <JobTracker />
                 </section>
 
-                <div className="p-6 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="p-8 bg-accent border-2 border-black shadow-brutal relative overflow-hidden group cursor-pointer"
+                  onClick={() => setIsPresetEditorOpen(true)}
+                >
                   <div className="relative z-10">
-                    <h3 className="font-bold text-lg mb-2">Need Custom Settings?</h3>
-                    <p className="text-blue-100 text-sm mb-4 leading-relaxed">
+                    <h3 className="font-black text-2xl mb-2 text-black uppercase tracking-tighter">Custom Settings?</h3>
+                    <p className="text-black/70 text-sm mb-6 leading-relaxed font-bold">
                       Advanced transcoding controls are available in the preset editor for fine-grained GOP and bitrate management.
                     </p>
                     <button 
-                      onClick={() => setIsPresetEditorOpen(true)}
-                      className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors"
+                      className="brutal-btn bg-black text-white w-full"
                     >
-                      Open Preset Editor
+                      Open Editor
                     </button>
                   </div>
-                  <Settings className="absolute -bottom-4 -right-4 w-32 h-32 text-blue-500/20 group-hover:rotate-45 transition-transform duration-700" />
-                </div>
+                  <Settings className="absolute -bottom-6 -right-6 w-32 h-32 text-black/10 group-hover:rotate-90 transition-transform duration-1000" />
+                </motion.div>
               </div>
             </motion.div>
           )}
@@ -157,31 +188,33 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-24 border-t border-slate-200 py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-3">
-            <Video className="w-5 h-5 text-slate-400" />
-            <span className="text-sm font-medium text-slate-500">© 2026 Video Metadata & Transcoding Studio</span>
+      <footer className="mt-32 border-t-2 border-black py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-black flex items-center justify-center text-white">
+              <Video className="w-6 h-6" />
+            </div>
+            <span className="text-sm font-black uppercase tracking-widest">© 2026 MMM STUDIO</span>
           </div>
-          <div className="flex items-center gap-6">
-            <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-slate-600 transition-colors">
-              <Github className="w-5 h-5" />
+          <div className="flex flex-wrap justify-center items-center gap-8">
+            <a href="https://github.com" target="_blank" rel="noreferrer" className="text-black hover:text-accent transition-colors">
+              <Github className="w-6 h-6" />
             </a>
             <button 
               onClick={() => setIsAboutOpen(true)}
-              className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+              className="text-xs font-black uppercase tracking-widest hover:text-accent transition-colors"
             >
               Terms
             </button>
             <button 
               onClick={() => setIsAboutOpen(true)}
-              className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+              className="text-xs font-black uppercase tracking-widest hover:text-accent transition-colors"
             >
               Privacy
             </button>
             <button 
               onClick={() => setIsDocOpen(true)}
-              className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+              className="text-xs font-black uppercase tracking-widest hover:text-accent transition-colors"
             >
               Documentation
             </button>
@@ -192,34 +225,41 @@ export default function App() {
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       <DocumentationModal isOpen={isDocOpen} onClose={() => setIsDocOpen(false)} />
       {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+      {isPresetEditorOpen && <PresetEditor key={editingPreset?.id || "new"} onClose={() => setIsPresetEditorOpen(false)} />}
+      {isABTestOpen && <ABTestCreator onClose={() => setIsABTestOpen(false)} />}
       <ComparisonView />
     </div>
   );
 }
 
-function NavLink({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavLink({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <a
-      href="#"
+    <button
+      onClick={onClick}
       className={cn(
-        "flex items-center gap-2 text-sm font-semibold transition-colors",
-        active ? "text-blue-600" : "text-slate-500 hover:text-slate-900"
+        "flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all relative group",
+        active ? "text-accent" : "text-black/40 hover:text-black"
       )}
     >
       {icon}
       {label}
-    </a>
+      {active && <motion.div layoutId="nav-active" className="absolute -bottom-1 left-0 right-0 h-1 bg-accent" />}
+      {!active && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-black scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />}
+    </button>
   );
 }
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group">
-      <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors mb-6">
+    <motion.div 
+      whileHover={{ y: -5 }}
+      className="brutal-card p-8 group"
+    >
+      <div className="w-14 h-14 bg-offwhite border-2 border-black flex items-center justify-center text-black group-hover:bg-accent transition-colors mb-6 shadow-brutal-sm">
         {icon}
       </div>
-      <h4 className="text-lg font-bold text-slate-900 mb-2">{title}</h4>
-      <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
-    </div>
+      <h4 className="text-xl font-black text-black mb-3 uppercase tracking-tighter">{title}</h4>
+      <p className="text-sm text-black/60 leading-relaxed font-medium">{description}</p>
+    </motion.div>
   );
 }

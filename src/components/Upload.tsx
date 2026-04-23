@@ -59,54 +59,61 @@ export default function Upload() {
   });
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full">
       <div
         {...getRootProps()}
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-12 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-4",
-          isDragActive ? "border-blue-500 bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white",
-          uploading && "pointer-events-none opacity-50"
+          "relative border-4 border-black p-12 sm:p-20 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-8 group",
+          isDragActive ? "bg-accent" : "bg-white",
+          uploading && "pointer-events-none opacity-80"
         )}
       >
         <input {...getInputProps()} />
         
-        <div className="p-4 rounded-full bg-blue-50 text-blue-600">
+        <div className={cn(
+          "w-20 h-20 border-4 border-black flex items-center justify-center transition-all duration-500",
+          isDragActive ? "bg-white rotate-12 scale-110" : "bg-accent group-hover:-rotate-6"
+        )}>
           {uploading ? (
-            <Loader2 className="w-8 h-8 animate-spin" />
+            <Loader2 className="w-10 h-10 animate-spin text-black" />
           ) : (
-            <UploadIcon className="w-8 h-8" />
+            <UploadIcon className="w-10 h-10 text-black" />
           )}
         </div>
 
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {uploading ? "Uploading..." : "Upload Video"}
+        <div className="text-center space-y-4">
+          <h3 className="text-3xl font-black text-black uppercase tracking-tighter">
+            {uploading ? "Processing..." : "Drop Media Here"}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Drag and drop your video file here, or click to browse
+          <p className="text-sm text-black/60 font-bold uppercase tracking-widest">
+            {isDragActive ? "Release to start" : "Drag and drop or click to browse"}
           </p>
-          <p className="text-xs text-gray-400 mt-2">
-            Supports MP4, MOV, MKV, AVI, WEBM
-          </p>
+          <div className="flex flex-wrap justify-center gap-2 pt-4">
+            {['MP4', 'MOV', 'MKV', 'AVI', 'WEBM'].map(ext => (
+              <span key={ext} className="px-2 py-1 bg-black text-white text-[10px] font-black tracking-widest">{ext}</span>
+            ))}
+          </div>
         </div>
 
         {uploading && (
-          <div className="w-full max-w-xs mt-4">
-            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full max-w-md mt-8 space-y-4">
+            <div className="h-6 w-full bg-white border-4 border-black overflow-hidden relative">
               <div
-                className="h-full bg-blue-600 transition-all duration-300"
+                className="h-full bg-accent border-r-4 border-black transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
+              <div className="absolute inset-0 flex items-center justify-center mix-blend-difference">
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">{progress}%</span>
+              </div>
             </div>
-            <p className="text-xs text-center text-gray-500 mt-2">{progress}% uploaded</p>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3 text-red-700">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <div className="text-sm">{error}</div>
+        <div className="mt-6 p-6 bg-red-500 text-white border-4 border-black shadow-brutal flex items-start gap-4">
+          <AlertCircle className="w-6 h-6 shrink-0" />
+          <div className="text-sm font-black uppercase tracking-tight">{error}</div>
         </div>
       )}
     </div>

@@ -411,7 +411,7 @@ async function startServer() {
   });
 
   app.post("/api/jobs", (req, res) => {
-    const { assetId, filename, preset, priority = "standard" } = req.body;
+    const { assetId, filename, preset, priority = "standard", testId } = req.body;
     const jobId = uuidv4();
     const outputFilename = `${jobId}_${preset.name.replace(/\s+/g, "_")}.${preset.outputContainer || "mp4"}`;
 
@@ -421,6 +421,7 @@ async function startServer() {
       progress: 0,
       priority,
       preset,
+      testId,
       inputFilename: filename,
       outputFilename,
       createdAt: new Date().toISOString(),
@@ -518,7 +519,7 @@ async function startServer() {
   // API Documentation
   app.get("/api/docs", (req, res) => {
     res.json({
-      name: "VideoMeta Pro API",
+      name: "MMM MediaMetaManagement API",
       version: "1.0.0",
       description: "Media compliance and transformation API for digital signage.",
       endpoints: [

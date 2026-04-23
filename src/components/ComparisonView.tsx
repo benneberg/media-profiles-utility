@@ -1,7 +1,7 @@
 import React from "react";
 import { useStore } from "../store";
 import { X, ArrowRightLeft, CheckCircle2, Info, HardDrive, Clock, Layers } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatBytes } from "../lib/utils";
 
 export default function ComparisonView() {
@@ -19,45 +19,45 @@ export default function ComparisonView() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={clearComparison}
-          className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+          className="absolute inset-0 bg-black/60 backdrop-blur-md"
         />
         
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative bg-white rounded-3xl shadow-2xl w-full max-w-7xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative bg-white border-4 border-black shadow-brutal-lg w-full max-w-7xl overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-100">
+          <div className="px-8 py-6 border-b-4 border-black flex items-center justify-between bg-accent">
+            <div className="flex items-center gap-6">
+              <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black shadow-brutal-sm">
                 <ArrowRightLeft className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Variant Comparison</h2>
-                <p className="text-sm text-slate-500 font-medium">Comparing {selectedJobs.length} processing results</p>
+                <h2 className="text-xl font-black text-black uppercase tracking-tighter">Variant Comparison</h2>
+                <p className="text-xs font-black text-black/40 uppercase tracking-widest">Comparing {selectedJobs.length} processing results</p>
               </div>
             </div>
             <button 
               onClick={clearComparison}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors group"
+              className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center hover:bg-black hover:text-white transition-all"
             >
-              <X className="w-6 h-6 text-slate-400 group-hover:text-slate-600" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* Comparison Grid */}
-          <div className="flex-1 overflow-x-auto p-8">
+          <div className="flex-1 overflow-x-auto p-8 bg-offwhite">
             <div className={cn(
-              "grid gap-8 min-w-max h-full",
+              "grid gap-10 min-w-max h-full",
               selectedJobs.length === 1 ? "grid-cols-1" : 
               selectedJobs.length === 2 ? "grid-cols-2" : "grid-cols-3"
             )}>
               {selectedJobs.map((job) => (
-                <div key={job.id} className="w-[400px] flex flex-col gap-6">
+                <div key={job.id} className="w-[400px] flex flex-col gap-8">
                   {/* Thumbnail Preview */}
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-inner relative group">
+                  <div className="aspect-video border-4 border-black overflow-hidden bg-black shadow-brutal-sm relative group">
                     {job.thumbnailUrl ? (
                       <img 
                         src={job.thumbnailUrl} 
@@ -66,26 +66,26 @@ export default function ComparisonView() {
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-700">
-                        <Info className="w-12 h-12 opacity-20" />
+                      <div className="w-full h-full flex items-center justify-center text-white/20">
+                        <Info className="w-12 h-12" />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full border border-white/20">
+                    <div className="absolute top-4 left-4 px-3 py-1 bg-accent border-2 border-black text-black text-[10px] font-black uppercase tracking-widest">
                       {job.preset.name}
                     </div>
                   </div>
 
                   {/* Thumbnail Strip */}
                   {job.thumbnailStrip && job.thumbnailStrip.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visual Timeline</p>
-                      <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-black text-black/40 uppercase tracking-widest">Visual Timeline</p>
+                      <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar">
                         {job.thumbnailStrip.map((url, i) => (
                           <img 
                             key={i} 
                             src={url} 
                             alt={`Strip ${i}`} 
-                            className="h-16 aspect-video rounded-lg object-cover border border-slate-200 shadow-sm shrink-0 hover:scale-105 transition-transform cursor-zoom-in"
+                            className="h-20 aspect-video border-2 border-black object-cover shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-zoom-in"
                             referrerPolicy="no-referrer"
                           />
                         ))}
@@ -94,43 +94,43 @@ export default function ComparisonView() {
                   )}
 
                   {/* Metadata Table */}
-                  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                      <h3 className="font-bold text-slate-900">Technical Specs</h3>
-                      <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider">
+                  <div className="bg-white border-4 border-black p-6 space-y-8 shadow-brutal-sm">
+                    <div className="flex items-center justify-between border-b-2 border-black pb-4">
+                      <h3 className="font-black text-black uppercase tracking-tighter">Technical Specs</h3>
+                      <div className="flex items-center gap-2 text-black bg-accent px-2 py-1 border-2 border-black text-[10px] font-black uppercase tracking-widest">
                         <CheckCircle2 className="w-4 h-4" />
                         Compliant
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-                      <CompareDetail icon={<Layers className="w-4 h-4" />} label="Codec" value={job.preset.video.codec.replace('lib', '').toUpperCase()} />
-                      <CompareDetail icon={<HardDrive className="w-4 h-4" />} label="Bitrate" value={job.preset.video.bitrate} />
-                      <CompareDetail icon={<ArrowRightLeft className="w-4 h-4" />} label="Resolution" value={`${job.preset.video.width}x${job.preset.video.height}`} />
-                      <CompareDetail icon={<Clock className="w-4 h-4" />} label="Frame Rate" value={`${job.preset.video.fps} fps`} />
+                    <div className="grid grid-cols-2 gap-y-8 gap-x-6">
+                      <CompareDetail icon={<Layers className="w-5 h-5" />} label="Codec" value={job.preset.video.codec.replace('lib', '').toUpperCase()} />
+                      <CompareDetail icon={<HardDrive className="w-5 h-5" />} label="Bitrate" value={job.preset.video.bitrate} />
+                      <CompareDetail icon={<ArrowRightLeft className="w-5 h-5" />} label="Resolution" value={`${job.preset.video.width}x${job.preset.video.height}`} />
+                      <CompareDetail icon={<Clock className="w-5 h-5" />} label="Frame Rate" value={`${job.preset.video.fps} fps`} />
                     </div>
 
-                    <div className="pt-4 border-t border-slate-200">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Preset Description</p>
-                      <p className="text-sm text-slate-600 leading-relaxed italic">
-                        "{job.preset.description}"
+                    <div className="pt-6 border-t-2 border-black">
+                      <p className="text-[10px] font-black text-black/40 uppercase tracking-widest mb-3">Preset Description</p>
+                      <p className="text-xs text-black font-bold uppercase tracking-tight leading-relaxed">
+                        {job.preset.description}
                       </p>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <a 
                       href={`/api/download/${job.id}`}
-                      className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-center text-sm font-bold hover:bg-slate-800 transition-all active:scale-95"
+                      className="flex-1 brutal-btn bg-black text-white py-4"
                     >
                       Download Variant
                     </a>
                     <button 
                       onClick={() => toggleComparisonJob(job.id)}
-                      className="p-3 bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      className="w-14 h-14 border-4 border-black bg-white text-black flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-brutal-sm hover:shadow-none active:translate-x-1 active:translate-y-1"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-6 h-6" />
                     </button>
                   </div>
                 </div>
@@ -139,11 +139,11 @@ export default function ComparisonView() {
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium uppercase tracking-widest">A/B Engineering Comparison Engine</span>
+          <div className="px-8 py-6 border-t-4 border-black bg-white flex items-center justify-between">
+            <span className="text-[10px] text-black/40 font-black uppercase tracking-widest">A/B Engineering Comparison Engine</span>
             <button
               onClick={clearComparison}
-              className="px-6 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all active:scale-95"
+              className="brutal-btn bg-white text-black px-8 py-2"
             >
               Close Comparison
             </button>
@@ -156,12 +156,12 @@ export default function ComparisonView() {
 
 function CompareDetail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2 text-slate-400">
+    <div className="space-y-2">
+      <div className="flex items-center gap-3 text-black/40">
         {icon}
-        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
       </div>
-      <p className="text-sm font-bold text-slate-900">{value}</p>
+      <p className="text-sm font-black text-black uppercase tracking-tighter">{value}</p>
     </div>
   );
 }

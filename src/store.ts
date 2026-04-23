@@ -9,7 +9,9 @@ interface AppState {
   selectedPreset: Preset | null;
   customPresets: Preset[];
   isPresetEditorOpen: boolean;
+  editingPreset: Preset | null;
   comparisonJobIds: string[];
+  abTests: { id: string; name: string; assetIds: string[]; presetIds: string[]; createdAt: string }[];
   
   setCurrentAsset: (asset: Asset | null) => void;
   addAsset: (asset: Asset) => void;
@@ -19,9 +21,10 @@ interface AppState {
   updateJob: (jobId: string, updates: Partial<Job>) => void;
   setSelectedPreset: (preset: Preset | null) => void;
   addCustomPreset: (preset: Preset) => void;
-  setIsPresetEditorOpen: (isOpen: boolean) => void;
+  setIsPresetEditorOpen: (isOpen: boolean, preset?: Preset | null) => void;
   toggleComparisonJob: (jobId: string) => void;
   clearComparison: () => void;
+  addABTest: (test: { id: string; name: string; assetIds: string[]; presetIds: string[]; createdAt: string }) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -32,7 +35,9 @@ export const useStore = create<AppState>((set) => ({
   selectedPreset: null,
   customPresets: [],
   isPresetEditorOpen: false,
+  editingPreset: null,
   comparisonJobIds: [],
+  abTests: [],
 
   setCurrentAsset: (asset) => set({ currentAsset: asset, metadata: null }),
   addAsset: (asset) => set((state) => ({ assets: [...state.assets, asset] })),
@@ -48,11 +53,12 @@ export const useStore = create<AppState>((set) => ({
     })),
   setSelectedPreset: (preset) => set({ selectedPreset: preset }),
   addCustomPreset: (preset) => set((state) => ({ customPresets: [...state.customPresets, preset] })),
-  setIsPresetEditorOpen: (isOpen) => set({ isPresetEditorOpen: isOpen }),
+  setIsPresetEditorOpen: (isOpen, preset = null) => set({ isPresetEditorOpen: isOpen, editingPreset: preset }),
   toggleComparisonJob: (jobId) => set((state) => ({
     comparisonJobIds: state.comparisonJobIds.includes(jobId)
       ? state.comparisonJobIds.filter(id => id !== jobId)
       : [...state.comparisonJobIds, jobId]
   })),
   clearComparison: () => set({ comparisonJobIds: [] }),
+  addABTest: (test) => set((state) => ({ abTests: [test, ...state.abTests] })),
 }));

@@ -1,4 +1,4 @@
-# VideoMeta Pro - Architecture Document
+# MMM MediaMetaManagement - Architecture Document
 
 ## 1. Overview
 A queue-driven media processing system designed for large file handling, deterministic validation, and scalable transcoding.

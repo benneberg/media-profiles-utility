@@ -1,4 +1,4 @@
-# VideoMeta Pro - TODO & Progress
+# MMM MediaMetaManagement - TODO & Progress
 
 ## ✅ Included So Far
 
