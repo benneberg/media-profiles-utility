@@ -75,7 +75,7 @@ const SYSTEM_PRESETS: Preset[] = [
 ];
 
 export default function PresetSelector() {
-  const { currentAsset, metadata, selectedPreset, setSelectedPreset, addJob, customPresets, setIsPresetEditorOpen } = useStore();
+  const { currentAsset, metadata, selectedPreset, setSelectedPreset, addJob, presets, setIsPresetEditorOpen } = useStore();
   const [isStarting, setIsStarting] = useState(false);
   const [priority, setPriority] = useState<"low" | "standard" | "high">("standard");
 
@@ -91,17 +91,8 @@ export default function PresetSelector() {
         priority,
       });
 
-      const { id } = response.data;
-      const newJob: Job = {
-        id,
-        status: "queued",
-        progress: 0,
-        priority,
-        preset: selectedPreset,
-        outputFilename: "", // Server will provide this
-        createdAt: new Date().toISOString(),
-      };
-      addJob(newJob);
+      const job = response.data;
+      addJob(job);
     } catch (err) {
       console.error("Failed to start job:", err);
     } finally {
@@ -111,7 +102,7 @@ export default function PresetSelector() {
 
   if (!currentAsset || !metadata) return null;
 
-  const allPresets = [...SYSTEM_PRESETS, ...customPresets];
+  const allPresets = [...SYSTEM_PRESETS, ...presets];
 
   // Preset Fit Analysis Logic
   const getPresetDeltas = (preset: Preset) => {

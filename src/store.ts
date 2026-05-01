@@ -6,8 +6,8 @@ interface AppState {
   assets: Asset[];
   metadata: Metadata | null;
   jobs: Job[];
+  presets: Preset[];
   selectedPreset: Preset | null;
-  customPresets: Preset[];
   isPresetEditorOpen: boolean;
   editingPreset: Preset | null;
   comparisonJobIds: string[];
@@ -17,10 +17,13 @@ interface AppState {
   addAsset: (asset: Asset) => void;
   removeAsset: (assetId: string) => void;
   setMetadata: (metadata: Metadata | null) => void;
+  setPresets: (presets: Preset[]) => void;
   addJob: (job: Job) => void;
   updateJob: (jobId: string, updates: Partial<Job>) => void;
+  setJobs: (jobs: Job[]) => void;
   setSelectedPreset: (preset: Preset | null) => void;
-  addCustomPreset: (preset: Preset) => void;
+  addPreset: (preset: Preset) => void;
+  removePreset: (presetId: string) => void;
   setIsPresetEditorOpen: (isOpen: boolean, preset?: Preset | null) => void;
   toggleComparisonJob: (jobId: string) => void;
   clearComparison: () => void;
@@ -32,8 +35,8 @@ export const useStore = create<AppState>((set) => ({
   assets: [],
   metadata: null,
   jobs: [],
+  presets: [],
   selectedPreset: null,
-  customPresets: [],
   isPresetEditorOpen: false,
   editingPreset: null,
   comparisonJobIds: [],
@@ -46,13 +49,22 @@ export const useStore = create<AppState>((set) => ({
     currentAsset: state.currentAsset?.assetId === assetId ? null : state.currentAsset
   })),
   setMetadata: (metadata) => set({ metadata }),
-  addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs] })),
+  setPresets: (presets) => set({ presets }),
+  addJob: (job) => set((state) => ({ 
+    jobs: state.jobs.some(j => j.id === job.id) ? state.jobs.map(j => j.id === job.id ? { ...j, ...job } : j) : [job, ...state.jobs] 
+  })),
+  setJobs: (jobs) => set({ jobs }),
   updateJob: (jobId, updates) =>
     set((state) => ({
       jobs: state.jobs.map((j) => (j.id === jobId ? { ...j, ...updates } : j)),
     })),
   setSelectedPreset: (preset) => set({ selectedPreset: preset }),
-  addCustomPreset: (preset) => set((state) => ({ customPresets: [...state.customPresets, preset] })),
+  addPreset: (preset) => set((state) => ({ 
+    presets: state.presets.some(p => p.id === preset.id) ? state.presets.map(p => p.id === preset.id ? preset : p) : [...state.presets, preset] 
+  })),
+  removePreset: (presetId) => set((state) => ({
+    presets: state.presets.filter(p => p.id !== presetId)
+  })),
   setIsPresetEditorOpen: (isOpen, preset = null) => set({ isPresetEditorOpen: isOpen, editingPreset: preset }),
   toggleComparisonJob: (jobId) => set((state) => ({
     comparisonJobIds: state.comparisonJobIds.includes(jobId)

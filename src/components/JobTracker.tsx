@@ -9,25 +9,6 @@ import { cn } from "../lib/utils";
 export default function JobTracker() {
   const { jobs, updateJob, toggleComparisonJob, comparisonJobIds, abTests } = useStore();
 
-  useEffect(() => {
-    const activeJobs = jobs.filter((j) => j.status === "queued" || j.status === "processing");
-    if (activeJobs.length === 0) return;
-
-    const interval = setInterval(async () => {
-      for (const job of activeJobs) {
-        try {
-          const response = await axios.get(`/api/jobs/${job.id}`);
-          const updatedJob = response.data;
-          updateJob(job.id, updatedJob);
-        } catch (err) {
-          console.error(`Failed to fetch status for job ${job.id}:`, err);
-        }
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [jobs, updateJob]);
-
   if (jobs.length === 0) return null;
 
   const groupedJobs = jobs.reduce((acc, job) => {

@@ -8,7 +8,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
 export default function ABTestCreator({ onClose }: { onClose: () => void }) {
-  const { assets, customPresets, addJob, addABTest } = useStore();
+  const { assets, presets, addJob, addABTest } = useStore();
   const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
   const [selectedPresetIds, setSelectedPresetIds] = useState<string[]>([]);
   const [testName, setTestName] = useState("");
@@ -19,7 +19,7 @@ export default function ABTestCreator({ onClose }: { onClose: () => void }) {
     { id: "signage-4k", name: "Signage 4K (H.265)", description: "Ultra HD for modern players" },
     { id: "signage-fhd", name: "Signage FHD (H.264)", description: "Standard Full HD compatibility" },
     { id: "web-optimized", name: "Web Optimized", description: "Fast start, medium bitrate" },
-    ...customPresets
+    ...presets
   ];
 
   const toggleAsset = (id: string) => {
@@ -63,7 +63,7 @@ export default function ABTestCreator({ onClose }: { onClose: () => void }) {
           } else if (presetId === "web-optimized") {
             preset = { name: "Web Optimized", outputContainer: "mp4", video: { codec: "libx264", bitrate: "4000k", fps: 30, width: 1280, height: 720 } };
           } else {
-            preset = customPresets.find(p => p.id === presetId);
+            preset = presets.find(p => p.id === presetId);
           }
 
           if (!preset) continue;

@@ -8,7 +8,7 @@ import { formatBytes, cn } from "../lib/utils";
 import { Preset } from "../types";
 
 export default function MetadataViewer() {
-  const { metadata, currentAsset, addCustomPreset, setIsPresetEditorOpen } = useStore();
+  const { metadata, currentAsset, addPreset, setIsPresetEditorOpen } = useStore();
   const [isRawView, setIsRawView] = useState(false);
 
   if (!metadata || !currentAsset || !metadata.streams || !metadata.format) return null;
@@ -146,27 +146,39 @@ export default function MetadataViewer() {
             isRawView ? "bg-white text-black" : "text-white hover:text-accent"
           )}
         >
-          Raw JSON
+          Developer Console
         </button>
       </div>
 
       {isRawView ? (
-        <div className="bg-black border-4 border-black shadow-brutal-lg p-8 overflow-hidden">
-          <div className="flex items-center justify-between mb-6 border-b-2 border-white/10 pb-6">
-            <div className="flex items-center gap-3 text-white/50">
-              <Terminal className="w-5 h-5" />
-              <span className="text-xs font-mono font-black uppercase tracking-widest">ffprobe_output.json</span>
+        <div className="space-y-10">
+          {metadata.raw?.mediainfo && (
+            <Section title="MediaInfo Technical Extract" icon={<FileText className="w-6 h-6" />}>
+               <div className="bg-black/5 p-6 border-2 border-black/10 overflow-hidden">
+                <pre className="text-[10px] font-mono text-black/70 overflow-x-auto max-h-[400px] custom-scrollbar">
+                  {JSON.stringify(metadata.raw.mediainfo, null, 2)}
+                </pre>
+              </div>
+            </Section>
+          )}
+          
+          <div className="bg-black border-4 border-black shadow-brutal-lg p-8 overflow-hidden">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-white/10 pb-6">
+              <div className="flex items-center gap-3 text-white/50">
+                <Terminal className="w-5 h-5" />
+                <span className="text-xs font-mono font-black uppercase tracking-widest">Enriched_Analysis.json</span>
+              </div>
+              <button 
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(metadata, null, 2))}
+                className="text-xs text-white/50 hover:text-accent transition-colors flex items-center gap-2 font-black uppercase tracking-widest"
+              >
+                <Copy className="w-4 h-4" /> Copy
+              </button>
             </div>
-            <button 
-              onClick={() => navigator.clipboard.writeText(JSON.stringify(metadata, null, 2))}
-              className="text-xs text-white/50 hover:text-accent transition-colors flex items-center gap-2 font-black uppercase tracking-widest"
-            >
-              <Copy className="w-4 h-4" /> Copy
-            </button>
+            <pre className="text-xs font-mono text-accent overflow-x-auto max-h-[600px] custom-scrollbar selection:bg-white selection:text-black">
+              {JSON.stringify(metadata, null, 2)}
+            </pre>
           </div>
-          <pre className="text-xs font-mono text-accent overflow-x-auto max-h-[600px] custom-scrollbar selection:bg-white selection:text-black">
-            {JSON.stringify(metadata, null, 2)}
-          </pre>
         </div>
       ) : (
         <>

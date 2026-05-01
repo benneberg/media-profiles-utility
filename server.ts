@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import ffmpeg from "fluent-ffmpeg";
 import axios from "axios";
 import { fileURLToPath } from "url";
+import mediainfoFactory from "mediainfo.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,8 +41,27 @@ const upload = multer({
 
 const jobs = new Map<string, any>();
 const webhooks = new Set<string>();
+const sseClients = new Set<express.Response>();
+const PRESETS_FILE = path.resolve(__dirname, "presets.json");
 const CONCURRENT_JOBS_LIMIT = 2;
 let activeJobsCount = 0;
+
+// Helper to broadcast job updates via SSE
+const broadcastJobUpdate = (job: any) => {
+  const data = JSON.stringify(job);
+  sseClients.forEach((client) => {
+    client.write(`event: job_update\ndata: ${data}\n\n`);
+  });
+};
+
+const updateJob = (jobId: string, updates: any) => {
+  const job = jobs.get(jobId);
+  if (!job) return;
+  const updatedJob = { ...job, ...updates };
+  jobs.set(jobId, updatedJob);
+  broadcastJobUpdate(updatedJob);
+  return updatedJob;
+};
 
 const processQueue = async () => {
   if (activeJobsCount >= CONCURRENT_JOBS_LIMIT) return;
@@ -67,8 +87,7 @@ const startJob = (jobId: string) => {
   if (!job) return;
 
   activeJobsCount++;
-  job.status = "processing";
-  jobs.set(jobId, { ...job });
+  updateJob(jobId, { status: "processing" });
 
   const inputPath = path.join(UPLOADS_DIR, job.inputFilename);
   const outputPath = path.join(OUTPUTS_DIR, job.outputFilename);
@@ -100,7 +119,7 @@ const startJob = (jobId: string) => {
       console.log(`Started job ${jobId}`);
     })
     .on("progress", (progress) => {
-      jobs.set(jobId, { ...jobs.get(jobId)!, progress: Math.round(progress.percent || 0) });
+      updateJob(jobId, { progress: Math.round(progress.percent || 0) });
     })
     .on("end", async () => {
       const thumbnailFilename = `thumb-${jobId}.jpg`;
@@ -122,25 +141,22 @@ const startJob = (jobId: string) => {
         console.error(`Thumbnail strip generation failed for job ${jobId}:`, err);
       }
       
-      const updatedJob = {
-        ...jobs.get(jobId)!,
+      const updatedJob = updateJob(jobId, {
         status: "completed",
         progress: 100,
         thumbnailUrl: thumbUrl,
         thumbnailStrip: strip,
         completedAt: new Date().toISOString(),
-      };
+      });
       
-      jobs.set(jobId, updatedJob);
-      triggerWebhooks("job.completed", updatedJob);
+      if (updatedJob) triggerWebhooks("job.completed", updatedJob);
       activeJobsCount--;
       processQueue();
     })
     .on("error", (err) => {
       console.error(`Job ${jobId} failed:`, err.message);
-      const updatedJob = { ...jobs.get(jobId)!, status: "failed", error: err.message };
-      jobs.set(jobId, updatedJob);
-      triggerWebhooks("job.failed", updatedJob);
+      const updatedJob = updateJob(jobId, { status: "failed", error: err.message });
+      if (updatedJob) triggerWebhooks("job.failed", updatedJob);
       activeJobsCount--;
       processQueue();
     })
@@ -286,7 +302,7 @@ async function startServer() {
     });
   });
 
-  app.get("/api/metadata/:filename", (req, res) => {
+  app.get("/api/metadata/:filename", async (req, res) => {
     const { filename } = req.params;
     const filePath = path.join(UPLOADS_DIR, filename);
     
@@ -297,7 +313,7 @@ async function startServer() {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Use a Promise to handle ffprobe with a local timeout
+    // FFProbe Analysis
     const probePromise = new Promise((resolve, reject) => {
       ffmpeg.ffprobe(filePath, (err, metadata) => {
         if (err) reject(err);
@@ -305,14 +321,37 @@ async function startServer() {
       });
     });
 
-    // Timeout for ffprobe specifically
+    // MediaInfo Analysis
+    const mediaInfoPromise = (async () => {
+      try {
+        const mi = await mediainfoFactory({ format: "object" });
+        const data = fs.readFileSync(filePath);
+        const result = await mi.analyzeData(data.length, (size, offset) => {
+          const buffer = Buffer.alloc(size);
+          const fd = fs.openSync(filePath, 'r');
+          fs.readSync(fd, buffer, 0, size, offset);
+          fs.closeSync(fd);
+          return buffer;
+        });
+        return result;
+      } catch (err) {
+        console.error("MediaInfo extraction failed:", err);
+        return null;
+      }
+    })();
+
+    // Timeout for analysis specifically
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Metadata extraction timed out after 30s")), 30000)
+      setTimeout(() => reject(new Error("Metadata extraction timed out after 45s")), 45000)
     );
 
-    Promise.race([probePromise, timeoutPromise])
-      .then((metadata: any) => {
-        // Rule-Based Validation Engine
+    try {
+      const [metadata, rawMediaInfo] = await Promise.all([
+        Promise.race([probePromise, timeoutPromise]) as Promise<any>,
+        mediaInfoPromise
+      ]);
+
+      // Rule-Based Validation Engine
       const rules: { id: string; severity: "info" | "warning" | "error"; message: string; recommendation: string }[] = [];
       let score = 100;
       
@@ -440,20 +479,70 @@ async function startServer() {
           score: analysis.signage_compatibility_score,
           rules,
         },
-        advanced
+        advanced,
+        raw: {
+          ffprobe: metadata,
+          mediainfo: rawMediaInfo
+        }
       });
-    })
-    .catch((err) => {
+    } catch (err: any) {
       console.error("Metadata extraction failed:", err);
       if (!res.headersSent) {
         res.status(500).json({ 
           error: "Failed to extract metadata", 
-          details: err.message === "Metadata extraction timed out after 30s" 
+          details: err.message === "Metadata extraction timed out after 45s" 
             ? "The file is too large or complex for rapid analysis. Try again or use a simpler format."
             : err.message 
         });
       }
+    }
+  });
+
+  // SSE for Job Progress
+  app.get("/api/jobs/events", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    sseClients.add(res);
+
+    req.on("close", () => {
+      sseClients.delete(res);
     });
+  });
+
+  // Preset Management
+  app.get("/api/presets", (req, res) => {
+    if (!fs.existsSync(PRESETS_FILE)) {
+      return res.json([]);
+    }
+    const presets = JSON.parse(fs.readFileSync(PRESETS_FILE, "utf-8"));
+    res.json(presets);
+  });
+
+  app.post("/api/presets", (req, res) => {
+    const preset = { ...req.body, id: req.body.id || `preset-${uuidv4()}` };
+    const presets = fs.existsSync(PRESETS_FILE) ? JSON.parse(fs.readFileSync(PRESETS_FILE, "utf-8")) : [];
+    presets.push(preset);
+    fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+    res.json(preset);
+  });
+
+  app.put("/api/presets/:id", (req, res) => {
+    const { id } = req.params;
+    let presets = fs.existsSync(PRESETS_FILE) ? JSON.parse(fs.readFileSync(PRESETS_FILE, "utf-8")) : [];
+    presets = presets.map((p: any) => p.id === id ? { ...req.body, id } : p);
+    fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+    res.json({ success: true });
+  });
+
+  app.delete("/api/presets/:id", (req, res) => {
+    const { id } = req.params;
+    let presets = fs.existsSync(PRESETS_FILE) ? JSON.parse(fs.readFileSync(PRESETS_FILE, "utf-8")) : [];
+    presets = presets.filter((p: any) => p.id !== id);
+    fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+    res.json({ success: true });
   });
 
   app.post("/api/jobs", (req, res) => {

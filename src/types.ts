@@ -77,12 +77,17 @@ export interface Metadata {
       cpu_load_estimate: "low" | "medium" | "high";
     };
   };
+  raw?: {
+    mediainfo?: any;
+    ffprobe?: any;
+  };
 }
 
 export interface Preset {
   id: string;
   name: string;
   description: string;
+  category?: string;
   outputContainer: string;
   video: {
     codec?: string;

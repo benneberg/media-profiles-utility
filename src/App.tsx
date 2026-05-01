@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import Upload from "./components/Upload";
 import MetadataViewer from "./components/MetadataViewer";
 import PresetSelector from "./components/PresetSelector";
@@ -16,11 +17,41 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "./lib/utils";
 
 export default function App() {
-  const { currentAsset, metadata, setIsPresetEditorOpen, isPresetEditorOpen, setCurrentAsset, editingPreset } = useStore();
+  const { currentAsset, metadata, setIsPresetEditorOpen, isPresetEditorOpen, setCurrentAsset, editingPreset, addJob, setPresets } = useStore();
   const [isAboutOpen, setIsAboutOpen] = React.useState(false);
   const [isDocOpen, setIsDocOpen] = React.useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [isABTestOpen, setIsABTestOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    // Load presets
+    axios.get("/api/presets").then(res => setPresets(res.data)).catch(console.error);
+
+    // Setup SSE for real-time updates
+    const eventSource = new EventSource("/api/jobs/events");
+    
+    eventSource.addEventListener("job_update", (event) => {
+      try {
+        const job = JSON.parse(event.data);
+        addJob(job);
+      } catch (err) {
+        console.error("Failed to parse SSE job update:", err);
+      }
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Connection failed:", err);
+      eventSource.close();
+      // Retry after 5 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-offwhite text-black font-sans selection:bg-accent selection:text-white overflow-x-hidden">

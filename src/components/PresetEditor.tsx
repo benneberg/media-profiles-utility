@@ -3,13 +3,16 @@ import { useStore } from "../store";
 import { Preset } from "../types";
 import { X, Save, Plus, Settings2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 import { cn } from "../lib/utils";
 
 export default function PresetEditor({ onClose }: { onClose: () => void }) {
-  const { addCustomPreset, setSelectedPreset, editingPreset } = useStore();
+  const { addPreset, setSelectedPreset, editingPreset } = useStore();
   const [name, setName] = useState(editingPreset?.name || "");
   const [description, setDescription] = useState(editingPreset?.description || "");
+  const [category, setCategory] = useState(editingPreset?.category || "Web");
   const [container, setContainer] = useState(editingPreset?.outputContainer || "mp4");
+  const [isSaving, setIsSaving] = useState(false);
   
   const [videoCodec, setVideoCodec] = useState(editingPreset?.video.codec || "libx264");
   const [videoBitrate, setVideoBitrate] = useState(editingPreset?.video.bitrate || "5000k");
@@ -21,11 +24,13 @@ export default function PresetEditor({ onClose }: { onClose: () => void }) {
   const [audioBitrate, setAudioBitrate] = useState(editingPreset?.audio?.bitrate || "192k");
   const [channels, setChannels] = useState(editingPreset?.audio?.channels || 2);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
     const newPreset: Preset = {
-      id: uuidv4(),
+      id: editingPreset?.id || `preset-${uuidv4()}`,
       name: name || "Custom Preset",
       description: description || "User defined transcoding settings",
+      category,
       outputContainer: container,
       video: {
         codec: videoCodec,
@@ -41,9 +46,20 @@ export default function PresetEditor({ onClose }: { onClose: () => void }) {
       },
     };
 
-    addCustomPreset(newPreset);
-    setSelectedPreset(newPreset);
-    onClose();
+    try {
+      if (editingPreset) {
+        await axios.put(`/api/presets/${editingPreset.id}`, newPreset);
+      } else {
+        await axios.post("/api/presets", newPreset);
+      }
+      addPreset(newPreset);
+      setSelectedPreset(newPreset);
+      onClose();
+    } catch (err) {
+      console.error("Failed to save preset:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -54,7 +70,9 @@ export default function PresetEditor({ onClose }: { onClose: () => void }) {
             <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-black shadow-brutal-sm">
               <Settings2 className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-black text-black uppercase tracking-tighter">Custom Preset Editor</h2>
+            <h2 className="text-xl font-black text-black uppercase tracking-tighter">
+              {editingPreset ? "Edit Preset" : "Create Custom Preset"}
+            </h2>
           </div>
           <button onClick={onClose} className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center hover:bg-black hover:text-white transition-all">
             <X className="w-6 h-6" />
@@ -75,6 +93,19 @@ export default function PresetEditor({ onClose }: { onClose: () => void }) {
                   placeholder="e.g. My Custom Signage"
                   className="w-full px-4 py-3 border-2 border-black bg-white focus:bg-accent outline-none transition-all font-bold uppercase tracking-tight"
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-black uppercase tracking-widest">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-black bg-white focus:bg-accent outline-none transition-all font-bold uppercase tracking-tight"
+                >
+                  <option value="Web">Web</option>
+                  <option value="Social">Social</option>
+                  <option value="Archival">Archival</option>
+                  <option value="Signage">Signage</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black text-black uppercase tracking-widest">Output Container</label>

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "preset-web-standard",
+    "name": "Web Standard",
+    "description": "Standard H.264 for web playback",
+    "category": "Web",
+    "outputContainer": "mp4",
+    "video": {
+      "codec": "libx264",
+      "bitrate": "2500k",
+      "fps": 30,
+      "width": 1280,
+      "height": 720
+    },
+    "audio": {
+      "codec": "aac",
+      "bitrate": "128k",
+      "channels": 2
+    }
+  },
+  {
+    "id": "preset-signage-4k",
+    "name": "Signage 4K",
+    "description": "High-quality 4K for signage players",
+    "category": "Signage",
+    "outputContainer": "mp4",
+    "video": {
+      "codec": "libx264",
+      "bitrate": "25000k",
+      "fps": 60,
+      "width": 3840,
+      "height": 2160
+    },
+    "audio": {
+      "codec": "aac",
+      "bitrate": "192k",
+      "channels": 2
+    }
+  }
+]
