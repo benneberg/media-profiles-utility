@@ -11,19 +11,56 @@ import SettingsModal from "./components/SettingsModal";
 import PresetEditor from "./components/PresetEditor";
 import ABTestCreator from "./components/ABTestCreator";
 import ComparisonView from "./components/ComparisonView";
+import AuthScreen from "./components/AuthScreen";
 import { useStore } from "./store";
-import { Video, Settings, Layout, Layers, Zap, Info, Github, Monitor, Globe, Beaker, Plus } from "lucide-react";
+import { Video, Settings, Layout, Layers, Zap, Info, Github, Monitor, Globe, Beaker, Plus, LogOut, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "./lib/utils";
 
 export default function App() {
-  const { currentAsset, metadata, setIsPresetEditorOpen, isPresetEditorOpen, setCurrentAsset, editingPreset, addJob, setPresets } = useStore();
+  const { 
+    currentAsset, 
+    metadata, 
+    setIsPresetEditorOpen, 
+    isPresetEditorOpen, 
+    setCurrentAsset, 
+    editingPreset, 
+    addJob, 
+    setPresets,
+    user,
+    setUser
+  } = useStore();
   const [isAboutOpen, setIsAboutOpen] = React.useState(false);
   const [isDocOpen, setIsDocOpen] = React.useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [isABTestOpen, setIsABTestOpen] = React.useState(false);
+  const [isAuthChecking, setIsAuthChecking] = React.useState(true);
+
+  // Initial check for existing authenticated session
+  React.useEffect(() => {
+    const token = localStorage.getItem("mmm_auth_token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios.get("/api/auth/me")
+        .then(res => {
+          setUser(res.data.user);
+        })
+        .catch(err => {
+          console.error("Token auto-login failed:", err);
+          localStorage.removeItem("mmm_auth_token");
+          delete axios.defaults.headers.common["Authorization"];
+        })
+        .finally(() => {
+          setIsAuthChecking(false);
+        });
+    } else {
+      setIsAuthChecking(false);
+    }
+  }, [setUser]);
 
   React.useEffect(() => {
+    if (!user) return;
+
     // Load presets
     axios.get("/api/presets").then(res => setPresets(res.data)).catch(console.error);
 
@@ -51,7 +88,7 @@ export default function App() {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [user, setPresets, addJob]);
 
   return (
     <div className="min-h-screen bg-offwhite text-black font-sans selection:bg-accent selection:text-white overflow-x-hidden">

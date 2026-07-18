@@ -75,24 +75,53 @@ const SYSTEM_PRESETS: Preset[] = [
 ];
 
 export default function PresetSelector() {
-  const { currentAsset, metadata, selectedPreset, setSelectedPreset, addJob, presets, setIsPresetEditorOpen } = useStore();
+  const { 
+    currentAsset, 
+    metadata, 
+    selectedPreset, 
+    setSelectedPreset, 
+    addJob, 
+    presets, 
+    setIsPresetEditorOpen,
+    isBatchMode,
+    selectedAssetIds,
+    assets
+  } = useStore();
   const [isStarting, setIsStarting] = useState(false);
   const [priority, setPriority] = useState<"low" | "standard" | "high">("standard");
 
   const handleStartJob = async () => {
-    if (!currentAsset || !selectedPreset) return;
+    if (!selectedPreset) return;
 
     setIsStarting(true);
     try {
-      const response = await axios.post("/api/jobs", {
-        assetId: currentAsset.assetId,
-        filename: currentAsset.filename,
-        preset: selectedPreset,
-        priority,
-      });
+      if (isBatchMode) {
+        const selectedAssets = assets.filter(a => selectedAssetIds.includes(a.assetId));
+        const filenames = selectedAssets.map(a => a.filename);
 
-      const job = response.data;
-      addJob(job);
+        const response = await axios.post("/api/bulk-jobs", {
+          filenames,
+          preset: selectedPreset,
+          priority,
+        });
+
+        if (response.data?.jobs) {
+          response.data.jobs.forEach((job: Job) => {
+            addJob(job);
+          });
+        }
+      } else {
+        if (!currentAsset) return;
+        const response = await axios.post("/api/jobs", {
+          assetId: currentAsset.assetId,
+          filename: currentAsset.filename,
+          preset: selectedPreset,
+          priority,
+        });
+
+        const job = response.data;
+        addJob(job);
+      }
     } catch (err) {
       console.error("Failed to start job:", err);
     } finally {
@@ -100,7 +129,17 @@ export default function PresetSelector() {
     }
   };
 
-  if (!currentAsset || !metadata) return null;
+  if (isBatchMode) {
+    if (selectedAssetIds.length === 0) {
+      return (
+        <div className="p-8 border-4 border-dashed border-black bg-white flex flex-col items-center justify-center text-center shadow-brutal">
+          <p className="text-sm font-black uppercase tracking-widest text-black/40">Select one or more assets from the library to configure batch transcoding.</p>
+        </div>
+      );
+    }
+  } else {
+    if (!currentAsset || !metadata) return null;
+  }
 
   const allPresets = [...SYSTEM_PRESETS, ...presets];
 
@@ -211,42 +250,60 @@ export default function PresetSelector() {
           animate={{ opacity: 1, y: 0 }}
           className="p-8 bg-black text-white border-4 border-black shadow-brutal-lg"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-accent text-black flex items-center justify-center border-2 border-white">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-black text-xs uppercase tracking-widest text-accent">Preset Fit Analysis</h4>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Source vs Target Profile</p>
+          {isBatchMode ? (
+            <div className="p-4 bg-white/5 border-2 border-white/10 mb-8">
+              <h4 className="font-black text-xs uppercase tracking-widest text-accent mb-2">Batch Transcoding Target</h4>
+              <p className="text-[10px] text-white/70 uppercase tracking-widest font-black mb-1">
+                Applying <span className="text-accent">{selectedPreset.name}</span> to {selectedAssetIds.length} assets:
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {assets.filter(a => selectedAssetIds.includes(a.assetId)).map(a => (
+                  <span key={a.assetId} className="px-2 py-1 bg-white/10 text-[9px] font-black uppercase border border-white/20">
+                    {a.originalName}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="sm:text-right">
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Target Profile</p>
-              <p className="text-sm font-black text-accent uppercase tracking-tighter">{selectedPreset.name}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {getPresetDeltas(selectedPreset).map((delta, i) => (
-              <div key={i} className="p-4 bg-white/5 border-2 border-white/10">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">{delta.field}</p>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest truncate max-w-[70px]">{delta.source}</span>
-                  <div className={cn(
-                    "px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-2",
-                    delta.status === "match" ? "bg-accent/20 text-accent border-accent/20" :
-                    delta.status === "increase" ? "bg-blue-500/20 text-blue-400 border-blue-500/20" :
-                    delta.status === "decrease" ? "bg-amber-500/20 text-amber-400 border-amber-500/20" :
-                    "bg-purple-500/20 text-purple-400 border-purple-500/20"
-                  )}>
-                    {delta.status}
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-accent text-black flex items-center justify-center border-2 border-white">
+                    <Zap className="w-6 h-6" />
                   </div>
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest truncate max-w-[70px]">{delta.target}</span>
+                  <div>
+                    <h4 className="font-black text-xs uppercase tracking-widest text-accent">Preset Fit Analysis</h4>
+                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Source vs Target Profile</p>
+                  </div>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Target Profile</p>
+                  <p className="text-sm font-black text-accent uppercase tracking-tighter">{selectedPreset.name}</p>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                {getPresetDeltas(selectedPreset).map((delta, i) => (
+                  <div key={i} className="p-4 bg-white/5 border-2 border-white/10">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">{delta.field}</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest truncate max-w-[70px]">{delta.source}</span>
+                      <div className={cn(
+                        "px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-2",
+                        delta.status === "match" ? "bg-accent/20 text-accent border-accent/20" :
+                        delta.status === "increase" ? "bg-blue-500/20 text-blue-400 border-blue-500/20" :
+                        delta.status === "decrease" ? "bg-amber-500/20 text-amber-400 border-amber-500/20" :
+                        "bg-purple-500/20 text-purple-400 border-purple-500/20"
+                      )}>
+                        {delta.status}
+                      </div>
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest truncate max-w-[70px]">{delta.target}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="mt-8 pt-8 border-t-2 border-white/10 flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="flex flex-col gap-6 w-full lg:w-auto">

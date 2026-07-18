@@ -1,7 +1,15 @@
 import { create } from "zustand";
 import { Asset, Metadata, Job, Preset } from "./types";
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 interface AppState {
+  user: User | null;
+  setUser: (user: User | null) => void;
   currentAsset: Asset | null;
   assets: Asset[];
   metadata: Metadata | null;
@@ -12,6 +20,8 @@ interface AppState {
   editingPreset: Preset | null;
   comparisonJobIds: string[];
   abTests: { id: string; name: string; assetIds: string[]; presetIds: string[]; createdAt: string }[];
+  selectedAssetIds: string[];
+  isBatchMode: boolean;
   
   setCurrentAsset: (asset: Asset | null) => void;
   addAsset: (asset: Asset) => void;
@@ -28,9 +38,14 @@ interface AppState {
   toggleComparisonJob: (jobId: string) => void;
   clearComparison: () => void;
   addABTest: (test: { id: string; name: string; assetIds: string[]; presetIds: string[]; createdAt: string }) => void;
+  toggleSelectAsset: (assetId: string) => void;
+  clearSelectedAssets: () => void;
+  setBatchMode: (enabled: boolean) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
   currentAsset: null,
   assets: [],
   metadata: null,
@@ -41,12 +56,15 @@ export const useStore = create<AppState>((set) => ({
   editingPreset: null,
   comparisonJobIds: [],
   abTests: [],
-
+  selectedAssetIds: [],
+  isBatchMode: false,
+ 
   setCurrentAsset: (asset) => set({ currentAsset: asset, metadata: null }),
   addAsset: (asset) => set((state) => ({ assets: [...state.assets, asset] })),
   removeAsset: (assetId) => set((state) => ({ 
     assets: state.assets.filter(a => a.assetId !== assetId),
-    currentAsset: state.currentAsset?.assetId === assetId ? null : state.currentAsset
+    currentAsset: state.currentAsset?.assetId === assetId ? null : state.currentAsset,
+    selectedAssetIds: state.selectedAssetIds.filter(id => id !== assetId)
   })),
   setMetadata: (metadata) => set({ metadata }),
   setPresets: (presets) => set({ presets }),
@@ -73,4 +91,14 @@ export const useStore = create<AppState>((set) => ({
   })),
   clearComparison: () => set({ comparisonJobIds: [] }),
   addABTest: (test) => set((state) => ({ abTests: [test, ...state.abTests] })),
+  toggleSelectAsset: (assetId) => set((state) => ({
+    selectedAssetIds: state.selectedAssetIds.includes(assetId)
+      ? state.selectedAssetIds.filter(id => id !== assetId)
+      : [...state.selectedAssetIds, assetId]
+  })),
+  clearSelectedAssets: () => set({ selectedAssetIds: [] }),
+  setBatchMode: (enabled) => set((state) => ({
+    isBatchMode: enabled,
+    selectedAssetIds: enabled && state.currentAsset ? [state.currentAsset.assetId] : []
+  })),
 }));

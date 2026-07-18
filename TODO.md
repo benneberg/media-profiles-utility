@@ -54,11 +54,3 @@
 ### 2. Infrastructure & Scale
 - [ ] **Distributed Workers**: Architecture for scaling transcoding across multiple nodes.
 - [ ] **User Auth & Teams**: Multi-user support for collaborative media management.
-
-
-## Notes:
-Integrate a lightweight video preview component within the AssetLibrary to allow users to play back their uploaded assets before starting a transcoding job. Add an 'Export Metadata' button to the MetadataViewer component that allows users to download the current metadata as a JSON or CSV file. Add a search bar to the MetadataViewer component to filter and find specific video metadata fields quickly when inspecting large files. In the MetadataViewer component, add a toggle to visually highlight differences when comparing the current asset's metadata against a saved preset's requirements. Implement a thumbnail generation feature. When a video is processed, extract a keyframe (e.g., at the 10-second mark or mid-point) and save it as a JPEG image. Display these thumbnails in the UI where video assets are listed.
-
-Implement batch processing functionality. Users should be able to select multiple video files and apply the same preset to all of them in a single job request. The UI should clearly indicate batch job status and provide per-file output details.
-
-Implement a user authentication system. Users should be able to sign up with email and password, log in, and log out. Store user data securely and protect against common vulnerabilities like XSS and CSRF.
